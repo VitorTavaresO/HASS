@@ -4,6 +4,7 @@
 #include <assert.h>
 
 #include "lib.h"
+uint16_t memory[64 * 1024];
 
 const char *get_reg_name_str(uint16_t reg)
 {
@@ -20,15 +21,16 @@ const char *get_reg_name_str(uint16_t reg)
 	return str[reg];
 }
 
+uint16_t getBit(uint16_t num, int bit)
+{
+	return (num >> bit) & 0x01;
+}
+
 int main(int argc, char **argv)
 {
-	if (argc != 2)
-	{
-		printf("usage: %s [bin_name]\n", argv[0]);
-		exit(1);
-	}
-
-	uint16_t memory[65536];
+	memory[0] = 0b0000000101110001;
+	unsigned int test = (getBit(memory[0], 4) << 4) | (getBit(memory[0], 3) << 3) | (getBit(memory[0], 2) << 2) | (getBit(memory[0], 1) << 1) | getBit(memory[0], 0);
+	printf("%d\n", test);
 
 	return 0;
 }
