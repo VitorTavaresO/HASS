@@ -63,9 +63,9 @@ uint16_t (*operations[])(uint16_t, uint16_t) = {
 	mul,
 	divi};
 
-uint16_t formatR(uint16_t opcode, uint16_t registers[])
+uint16_t formatR(uint16_t opcode, uint16_t *destiny, uint16_t registers[])
 {
-	operations[opcode](registers[extract_bits(memory[0], 3, 3)], registers[extract_bits(memory[0], 0, 3)]);
+	*destiny = operations[opcode](registers[extract_bits(memory[0], 3, 3)], registers[extract_bits(memory[0], 0, 3)]);
 }
 
 int main(int argc, char **argv)
@@ -75,11 +75,12 @@ int main(int argc, char **argv)
 	//	printf("usage: %s <binfile>\n", argv[0]);
 	//	exit(1);
 	// }
-	memory[0] = 0b000000101110001;
+	memory[0] = 0b000000000110001;
 	uint16_t registers[8];
 	registers[1] = 10;
 	registers[6] = 20;
-	registers[extract_bits(memory[0], 6, 3)] = formatR(extract_bits(memory[0], 9, 6), registers);
+	formatR(extract_bits(memory[0], 9, 6), &registers[extract_bits(memory[0], 6, 3)], registers);
+	printf("%d", registers[extract_bits(memory[0], 6, 3)]);
 	return 0;
 }
 
