@@ -38,19 +38,17 @@ int main(int argc, char **argv)
 	//	printf("usage: %s <binfile>\n", argv[0]);
 	//	exit(1);
 	// }
-
+	uint16_t registers[8];
+	registers[1] = 10;
+	registers[6] = 20;
 	memory[0] = 0b0000000101110001;
+
 	uint16_t operator02 = extract_bits(memory[0], 0, 3);
 	uint16_t operator01 = extract_bits(memory[0], 3, 3);
 	uint16_t destiny = extract_bits(memory[0], 6, 3);
 	uint16_t opcode = extract_bits(memory[0], 9, 6);
-	uint16_t format = extract_bits(memory[0], 15, 1);
 
-	printf("%d", format);
-	printf("%d", opcode);
-	printf("%d", destiny);
-	printf("%d", operator01);
-	printf("%d", operator02);
+	printf("%d\n", registers[operator02] + registers[operator01]);
 
 	return 0;
 }
