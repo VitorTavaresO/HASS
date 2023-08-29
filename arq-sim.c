@@ -43,11 +43,23 @@ uint16_t divi(uint16_t a, uint16_t b)
 	return a / b;
 }
 
+uint16_t cmp_equal(uint16_t a, uint16_t b)
+{
+	return (a == b);
+}
+
+uint16_t cmp_nequal(uint16_t a, uint16_t b)
+{
+	return (a != b);
+}
+
 uint16_t (*operations[])(uint16_t, uint16_t) = {
 	add,
 	sub,
 	mul,
-	divi};
+	divi,
+	cmp_equal,
+	cmp_nequal};
 
 uint16_t formatR(uint16_t opcode, uint16_t *destiny, uint16_t registers[])
 {
@@ -61,10 +73,10 @@ int main(int argc, char **argv)
 	//	printf("usage: %s <binfile>\n", argv[0]);
 	//	exit(1);
 	// }
-	memory[0] = 0b0000000101110001;
+	memory[0] = 0b0000101101110001;
 	uint16_t registers[8];
 	registers[1] = 10;
-	registers[6] = 20;
+	registers[6] = 10;
 	formatR(extract_bits(memory[0], 9, 6), &registers[extract_bits(memory[0], 6, 3)], registers);
 	printf("%d", registers[extract_bits(memory[0], 6, 3)]);
 	return 0;
