@@ -4,12 +4,12 @@
 #include <assert.h>
 #include <stdbool.h>
 
+#include "lib.h"
+
 #define ADD 0b0000
 #define SUB 0b0001
 #define MUL 0b0010
 #define DIV 0b0011
-
-// #include "lib.h"
 
 uint16_t memory[64 * 1024];
 
@@ -26,15 +26,6 @@ const char *get_reg_name_str(uint16_t reg)
 		"r7"};
 
 	return str[reg];
-}
-
-uint16_t extract_bits(uint16_t v, uint8_t bstart, uint8_t blength)
-{
-	uint16_t mask;
-
-	mask = (1 << blength) - 1;
-
-	return ((v >> bstart) & mask);
 }
 
 uint16_t add(uint16_t a, uint16_t b)

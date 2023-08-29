@@ -5,7 +5,7 @@
 
 void load_binary_to_memory(char *fname, void *memory, uint32_t mem_size);
 
-inline uint16_t extract_bits(uint16_t v, uint8_t bstart, uint8_t blength)
+uint16_t extract_bits(uint16_t v, uint8_t bstart, uint8_t blength)
 {
 	uint16_t mask;
 
