@@ -63,6 +63,11 @@ uint16_t (*operations[])(uint16_t, uint16_t) = {
 	mul,
 	divi};
 
+uint16_t formatR(uint16_t opcode, uint16_t registers[])
+{
+	operations[opcode](registers[extract_bits(memory[0], 3, 3)], registers[extract_bits(memory[0], 0, 3)]);
+}
+
 int main(int argc, char **argv)
 {
 	// if (argc != 2)
@@ -74,13 +79,12 @@ int main(int argc, char **argv)
 	uint16_t registers[8];
 	registers[1] = 10;
 	registers[6] = 20;
-	registers[extract_bits(memory[0], 6, 3)] = operations[extract_bits(memory[0], 9, 6)](registers[extract_bits(memory[0], 3, 3)], registers[extract_bits(memory[0], 0, 3)]);
-	printf("%d", registers[extract_bits(memory[0], 6, 3)]);
-	// uint16_t operator02 = extract_bits(memory[0], 0, 3);
-	// uint16_t operator01 = extract_bits(memory[0], 3, 3);
-	// uint16_t destiny = extract_bits(memory[0], 6, 3);
-	// uint16_t opcode = extract_bits(memory[0], 9, 6);
-	// uint16_t format = extract_bits(memory[0], 15, 1);
-
+	registers[extract_bits(memory[0], 6, 3)] = formatR(extract_bits(memory[0], 9, 6), registers);
 	return 0;
 }
+
+// uint16_t operator02 = extract_bits(memory[0], 0, 3);
+// uint16_t operator01 = extract_bits(memory[0], 3, 3);
+// uint16_t destiny = extract_bits(memory[0], 6, 3);
+// uint16_t opcode = extract_bits(memory[0], 9, 6);
+// uint16_t format = extract_bits(memory[0], 15, 1);
