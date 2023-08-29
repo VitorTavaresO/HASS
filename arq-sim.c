@@ -6,11 +6,6 @@
 
 #include "lib.h"
 
-#define ADD 0b0000
-#define SUB 0b0001
-#define MUL 0b0010
-#define DIV 0b0011
-
 uint16_t memory[64 * 1024];
 
 const char *get_reg_name_str(uint16_t reg)
@@ -66,7 +61,7 @@ int main(int argc, char **argv)
 	//	printf("usage: %s <binfile>\n", argv[0]);
 	//	exit(1);
 	// }
-	memory[0] = 0b000000000110001;
+	memory[0] = 0b0000000101110001;
 	uint16_t registers[8];
 	registers[1] = 10;
 	registers[6] = 20;
