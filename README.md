@@ -2,7 +2,7 @@
 
 Hypothetical Architecture Emulator System
 Creation of a Emulator for a Hypothetical Architecture with the following instruction set:
-- Format R
+ Format R
  - add
  - sub
  - mul
@@ -12,7 +12,7 @@ Creation of a Emulator for a Hypothetical Architecture with the following instru
  - load
  - store
 
-- Format L:
+ Format L:
  - jump
  - jump_cond
  - mov
