@@ -53,7 +53,7 @@ uint16_t cmp_nequal(uint16_t a, uint16_t b)
 	return (a != b);
 }
 
-uint16_t (*operations[])(uint16_t, uint16_t) = {
+uint16_t (*operationsR[])(uint16_t, uint16_t) = {
 	add,
 	sub,
 	mul,
@@ -61,9 +61,22 @@ uint16_t (*operations[])(uint16_t, uint16_t) = {
 	cmp_equal,
 	cmp_nequal};
 
-uint16_t formatR(uint16_t opcode, uint16_t *destiny, uint16_t registers[])
+uint16_t formatR(uint16_t registers[])
 {
-	*destiny = operations[opcode](registers[extract_bits(memory[0], 3, 3)], registers[extract_bits(memory[0], 0, 3)]);
+	registers[extract_bits(memory[0], 6, 3)] = operationsR[extract_bits(memory[0], 9, 6)](registers[extract_bits(memory[0], 3, 3)], registers[extract_bits(memory[0], 0, 3)]);
+}
+
+uint16_t mov(uint16_t a, uint16_t b)
+{
+	return b;
+}
+
+uint16_t (*operationsL[])(uint16_t, uint16_t) = {
+	mov};
+
+uint16_t formatL(uint16_t registers[])
+{
+	registers[extract_bits(memory[0], 6, 3)] = operationsL[extract_bits(memory[0], 9, 6)](registers[extract_bits(memory[0], 3, 3)], registers[extract_bits(memory[0], 0, 3)]);
 }
 
 int main(int argc, char **argv)
@@ -73,11 +86,11 @@ int main(int argc, char **argv)
 	//	printf("usage: %s <binfile>\n", argv[0]);
 	//	exit(1);
 	// }
-	memory[0] = 0b0000101101110001;
+	memory[0] = 0b0000000101110001;
 	uint16_t registers[8];
 	registers[1] = 10;
 	registers[6] = 10;
-	formatR(extract_bits(memory[0], 9, 6), &registers[extract_bits(memory[0], 6, 3)], registers);
+	formatR(registers);
 	printf("%d", registers[extract_bits(memory[0], 6, 3)]);
 	return 0;
 }
