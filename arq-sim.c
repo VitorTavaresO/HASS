@@ -76,7 +76,17 @@ uint16_t (*operationsL[])(uint16_t, uint16_t) = {
 
 uint16_t formatL(uint16_t registers[])
 {
-	registers[extract_bits(memory[0], 6, 3)] = operationsL[extract_bits(memory[0], 9, 6)](registers[extract_bits(memory[0], 3, 3)], registers[extract_bits(memory[0], 0, 3)]);
+	printf("FormatL");
+	// registers[extract_bits(memory[0], 6, 3)] = operationsL[extract_bits(memory[0], 9, 6)](registers[extract_bits(memory[0], 3, 3)], registers[extract_bits(memory[0], 0, 3)]);
+}
+
+uint16_t (*formats[])(uint16_t registers[]) = {
+	formatR,
+	formatL};
+
+uint16_t defineFormat(uint16_t registers[])
+{
+	formats[extract_bits(memory[0], 15, 1)](registers);
 }
 
 int main(int argc, char **argv)
@@ -90,7 +100,7 @@ int main(int argc, char **argv)
 	uint16_t registers[8];
 	registers[1] = 10;
 	registers[6] = 10;
-	formatR(registers);
+	defineFormat(registers);
 	printf("%d", registers[extract_bits(memory[0], 6, 3)]);
 	return 0;
 }
