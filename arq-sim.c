@@ -95,12 +95,14 @@ int main(int argc, char **argv)
 	//	printf("usage: %s <binfile>\n", argv[0]);
 	//	exit(1);
 	// }
-	memory[0] = 0b1000110000111001;
 	uint16_t registers[8];
-	registers[1] = 10;
-	registers[6] = 10;
+	memory[0] = 0b1000010001100100;
 	defineFormat(registers);
-	printf("%d", registers[3]);
+	memory[0] = 0b1001100000111001;
+	defineFormat(registers);
+	memory[0] = 0b0000000101110001;
+	defineFormat(registers);
+	printf("%d", registers[5]);
 	return 0;
 }
 
