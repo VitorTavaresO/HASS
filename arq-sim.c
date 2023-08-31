@@ -66,18 +66,17 @@ uint16_t formatR(uint16_t registers[])
 	registers[extract_bits(memory[0], 6, 3)] = operationsR[extract_bits(memory[0], 9, 6)](registers[extract_bits(memory[0], 3, 3)], registers[extract_bits(memory[0], 0, 3)]);
 }
 
-uint16_t mov(uint16_t a, uint16_t b)
+uint16_t mov(uint16_t a)
 {
-	return b;
+	return a;
 }
 
-uint16_t (*operationsL[])(uint16_t, uint16_t) = {
+uint16_t (*operationsL[])(uint16_t) = {
 	mov};
 
 uint16_t formatL(uint16_t registers[])
 {
-	printf("FormatL");
-	// registers[extract_bits(memory[0], 6, 3)] = operationsL[extract_bits(memory[0], 9, 6)](registers[extract_bits(memory[0], 3, 3)], registers[extract_bits(memory[0], 0, 3)]);
+	registers[extract_bits(memory[0], 10, 3)] = operationsL[0](extract_bits(memory[0], 0, 10));
 }
 
 uint16_t (*formats[])(uint16_t registers[]) = {
@@ -96,12 +95,12 @@ int main(int argc, char **argv)
 	//	printf("usage: %s <binfile>\n", argv[0]);
 	//	exit(1);
 	// }
-	memory[0] = 0b0000000101110001;
+	memory[0] = 0b1000110000111001;
 	uint16_t registers[8];
 	registers[1] = 10;
 	registers[6] = 10;
 	defineFormat(registers);
-	printf("%d", registers[extract_bits(memory[0], 6, 3)]);
+	printf("%d", registers[3]);
 	return 0;
 }
 
