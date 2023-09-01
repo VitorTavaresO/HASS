@@ -1,6 +1,5 @@
-# HAES
+# HAES - Hypothetical Architecture Emulator System
 
-Hypothetical Architecture Emulator System
 Creation of a Emulator for a Hypothetical Architecture with the following instruction set:
 
 Format R
