@@ -90,7 +90,8 @@ int main(int argc, char **argv)
 	memory[0] = 0b1000010001100100;
 	memory[1] = 0b1001100000111001;
 	memory[2] = 0b0000000101110001;
-	for (cpu.addr = 0; cpu.addr < 3; cpu.addr++)
+	memory[3] = 0b0000110011010001;
+	for (cpu.addr = 0; cpu.addr < 4; cpu.addr++)
 	{
 		search(&cpu);
 		decode(&cpu);
