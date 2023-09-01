@@ -110,7 +110,7 @@ void execute(struct Cpu *cpu)
 		}
 		break;
 	case 1:
-		registers[cpu->destiny] = mov(registers[cpu->operator01]);
+		registers[cpu->destiny] = mov(cpu->operator01);
 		break;
 	}
 }
