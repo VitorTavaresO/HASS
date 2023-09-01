@@ -20,11 +20,11 @@ struct Cpu
 	uint16_t destiny;
 	uint16_t operator01;
 	uint16_t operator02;
-};
+} cpu;
 
-uint16_t search(struct Cpu cpu)
+void search(struct Cpu *cpu)
 {
-	return memory[cpu.addr];
+	cpu->instruction = memory[cpu->addr];
 }
 
 void decode(struct Cpu *cpu)
@@ -110,24 +110,27 @@ void execute(struct Cpu *cpu)
 		}
 		break;
 	case 1:
-		registers[cpu->destiny] = mov(cpu->operator01);
+		switch (cpu->opcode)
+		{
+		case 0:
+			registers[cpu->destiny] = mov(cpu->operator01);
+			break;
+		}
 		break;
 	}
 }
 
 int main(int argc, char **argv)
 {
-
 	memory[0] = 0b1000010001100100;
 	memory[1] = 0b1001100000111001;
 	memory[2] = 0b0000000101110001;
-	struct Cpu cpu;
-	cpu.addr = 0;
-	cpu.instruction = search(cpu);
-	printf("%d\n", cpu.instruction);
-	decode(&cpu);
-	printf("%d\n%d\n%d\n%d\n%d\n", cpu.format, cpu.opcode, cpu.destiny, cpu.operator01, cpu.operator02);
-	execute(&cpu);
-	printf("%d\n", registers[1]);
+	for (cpu.addr = 0; cpu.addr < 3; cpu.addr++)
+	{
+		search(&cpu);
+		decode(&cpu);
+		execute(&cpu);
+	}
+	printf("%d\n", registers[cpu.destiny]);
 	return 0;
 }
