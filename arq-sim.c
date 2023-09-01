@@ -47,41 +47,6 @@ void decode(struct Cpu *cpu)
 	}
 }
 
-uint16_t add(uint16_t a, uint16_t b)
-{
-	return a + b;
-}
-
-uint16_t sub(uint16_t a, uint16_t b)
-{
-	return a - b;
-}
-
-uint16_t mul(uint16_t a, uint16_t b)
-{
-	return a * b;
-}
-
-uint16_t divi(uint16_t a, uint16_t b)
-{
-	return a / b;
-}
-
-uint16_t cmp_equal(uint16_t a, uint16_t b)
-{
-	return (a == b);
-}
-
-uint16_t cmp_nequal(uint16_t a, uint16_t b)
-{
-	return (a != b);
-}
-
-uint16_t mov(uint16_t a)
-{
-	return a;
-}
-
 void execute(struct Cpu *cpu)
 {
 	switch (cpu->format)
@@ -90,22 +55,22 @@ void execute(struct Cpu *cpu)
 		switch (cpu->opcode)
 		{
 		case 0:
-			registers[cpu->destiny] = add(registers[cpu->operator01], registers[cpu->operator02]);
+			registers[cpu->destiny] = registers[cpu->operator01] + registers[cpu->operator02];
 			break;
 		case 1:
-			registers[cpu->destiny] = sub(registers[cpu->operator01], registers[cpu->operator02]);
+			registers[cpu->destiny] = registers[cpu->operator01] - registers[cpu->operator02];
 			break;
 		case 2:
-			registers[cpu->destiny] = mul(registers[cpu->operator01], registers[cpu->operator02]);
+			registers[cpu->destiny] = registers[cpu->operator01] * registers[cpu->operator02];
 			break;
 		case 3:
-			registers[cpu->destiny] = divi(registers[cpu->operator01], registers[cpu->operator02]);
+			registers[cpu->destiny] = registers[cpu->operator01] / registers[cpu->operator02];
 			break;
 		case 4:
-			registers[cpu->destiny] = cmp_equal(registers[cpu->operator01], registers[cpu->operator02]);
+			registers[cpu->destiny] = registers[cpu->operator01] == registers[cpu->operator02];
 			break;
 		case 5:
-			registers[cpu->destiny] = cmp_nequal(registers[cpu->operator01], registers[cpu->operator02]);
+			registers[cpu->destiny] = registers[cpu->operator01] != registers[cpu->operator02];
 			break;
 		}
 		break;
@@ -113,7 +78,7 @@ void execute(struct Cpu *cpu)
 		switch (cpu->opcode)
 		{
 		case 0:
-			registers[cpu->destiny] = mov(cpu->operator01);
+			registers[cpu->destiny] = cpu->operator01;
 			break;
 		}
 		break;
