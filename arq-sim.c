@@ -138,6 +138,6 @@ int main(int argc, char **argv)
 		execute(&cpu);
 		cpu.addr++;
 	}
-	printf("%d\n", registers[1]);
+	printf("%d\n", registers[4]);
 	return 0;
 }
