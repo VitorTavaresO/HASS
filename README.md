@@ -11,9 +11,9 @@ Format R
  - cmp_neq
  - load
  - store
+ - exit 63 - syscall
 
- Format L:
+ Format I:
  - jump
  - jump_cond
  - mov
- - syscall
