@@ -22,6 +22,7 @@ struct Cpu
 	uint16_t destiny;
 	uint16_t operator01;
 	uint16_t operator02;
+	bool alive;
 } cpu;
 
 // Busca as instruções na memória
@@ -82,15 +83,31 @@ void execute(struct Cpu *cpu)
 		case 7: // store
 			memory[registers[cpu->destiny]] = registers[cpu->operator01];
 			break;
-		case 63: // halt
-			exit(0);
+		case 63: // exit
+			cpu->alive = false;
 			break;
 		}
 		break;
 	case 1: // Instruções I
 		switch (cpu->opcode)
 		{
-		case 0: // mov
+		case 0: // jump
+			cpu->addr = (cpu->operator01 - 1);
+			break;
+		case 1: // jump_cond
+			switch (cpu->destiny)
+			{
+			case 0:
+				break;
+			case 1:
+				cpu->addr = (cpu->operator01 - 1);
+				break;
+			}
+			break;
+		case 2: // empty
+			break;
+
+		case 3: // mov
 			registers[cpu->destiny] = cpu->operator01;
 			break;
 		}
@@ -100,20 +117,27 @@ void execute(struct Cpu *cpu)
 
 int main(int argc, char **argv)
 {
-	memory[0] = 0b1000010001100100; // mov r1, 100
-	memory[1] = 0b1001100000111001; // mov r6, 57
-	memory[2] = 0b0000000101110001; // add r5, r6, r1
-	memory[3] = 0b1001110000000000; // mov r7, 0
-	memory[4] = 0b0000111111101000; // store (r7), r5
-	memory[5] = 0b0000110100111000; // load r4, (r7)
-	memory[6] = 0b0000001100100110; // sub r4, r4, r6
+	memory[0] = 0b1000000000000010;	 // jump
+	memory[1] = 0b0111111000000000;	 // exit syscall
+	memory[2] = 0b1110010001100100;	 // mov r1, 100
+	memory[3] = 0b1111100000111001;	 // mov r6, 57
+	memory[4] = 0b0000000101110001;	 // add r5, r6, r1
+	memory[5] = 0b1111110000000000;	 // mov r7, 0
+	memory[6] = 0b0000111111101000;	 // store (r7), r5
+	memory[7] = 0b0000110100111000;	 // load r4, (r7)
+	memory[8] = 0b0000001100100110;	 // sub r4, r4, r6
+	memory[9] = 0b0000100011101001;	 // cmp_eq r3, r4, r1
+	memory[10] = 0b1010110000000001; // jump_cond r3, 1
 
-	for (cpu.addr = 0; cpu.addr < 7; cpu.addr++)
+	cpu.addr = 0;
+	cpu.alive = true;
+	while (cpu.alive)
 	{
 		search(&cpu);
 		decode(&cpu);
 		execute(&cpu);
+		cpu.addr++;
 	}
-	printf("%d\n", registers[cpu.destiny]);
+	printf("%d\n", registers[1]);
 	return 0;
 }
