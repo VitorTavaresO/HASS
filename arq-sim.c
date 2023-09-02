@@ -92,10 +92,12 @@ void execute(struct Cpu *cpu)
 int main(int argc, char **argv)
 {
 	memory[0] = 0b1000010001100100; //mov r1, 100
-	memory[1] = 0b1001100000111001; //mov r6, 57
-	memory[2] = 0b0000000101110001; //add r5, r6, r1
+	memory[1] = 0b1001100000111001;	//mov r6, 57
+	memory[2] = 0b0000000101110001;	//add r5, r6, r1
+	memory[3] = 0b0000110011010001; //cmp_nq r5, r1
 
-	for (cpu.addr = 0; cpu.addr < 3; cpu.addr++)
+
+	for (cpu.addr = 0; cpu.addr < 4; cpu.addr++)
 	{
 		search(&cpu);
 		decode(&cpu);
