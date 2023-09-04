@@ -38,7 +38,7 @@ void print_registers()
 {
 	for (int i = 0; i < REGISTERS; i++)
 	{
-		printf("r%d: %d", i, registers[i]);
+		printf("r%d:%d ", i, registers[i]);
 	}
 }
 
@@ -189,10 +189,8 @@ int main(int argc, char **argv)
 		decode(&cpu);
 		execute(&cpu);
 		dprint("-------------------\n");
-		// getchar();
+		getchar();
 	}
-	printf("%d\n", registers[4]);
-
 	printf("Fim da execucao\n");
 	print_registers();
 	printf("\n");
