@@ -6,16 +6,25 @@
 #include "lib.h"
 #include "lib.c"
 
-#define MEMORY 64 * 1024
+#define DEBUG
+
+#ifdef DEBUG
+#define dprint(...) printf(__VA_ARGS__)
+#define dprintln(f, ...) printf(f "\n", __VA_ARGS__)
+#else
+#define dprint(...)
+#define dprintln(f, ...)
+#endif
+#define MEMORY_SIZE 64 * 1024
 #define REGISTERS 8
 
-uint16_t memory[MEMORY];
+uint16_t memory[MEMORY_SIZE];
 uint16_t registers[REGISTERS];
 
 // Struct com as inforamções
 struct Cpu
 {
-	uint16_t addr;
+	uint16_t pc;
 	uint16_t instruction;
 	uint16_t format;
 	uint16_t opcode;
@@ -25,10 +34,28 @@ struct Cpu
 	bool alive;
 } cpu;
 
+void print_registers()
+{
+	for (int i = 0; i < REGISTERS; i++)
+	{
+		printf("r%d: %d", i, registers[i]);
+	}
+}
+
+void print_200_memory()
+{
+	for (int i = 0; i < 200; i++)
+	{
+		printf("%d ", memory[i]);
+	}
+}
+
 // Busca as instruções na memória
 void search(struct Cpu *cpu)
 {
-	cpu->instruction = memory[cpu->addr];
+	cpu->instruction = memory[cpu->pc];
+	dprintln("pc: %d", cpu->pc);
+	cpu->pc++;
 }
 
 // Decodifica as instruções
@@ -57,87 +84,119 @@ void execute(struct Cpu *cpu)
 	switch (cpu->format)
 	{
 	case 0: // Instruções R
+		dprintln("formato R", cpu->format);
 		switch (cpu->opcode)
 		{
 		case 0: // add
 			registers[cpu->destiny] = registers[cpu->operator01] + registers[cpu->operator02];
+			dprint("add r%d, r%d, r%d\n", cpu->destiny, cpu->operator01, cpu->operator02);
 			break;
 		case 1: // sub
 			registers[cpu->destiny] = registers[cpu->operator01] - registers[cpu->operator02];
+			dprintln("sub r%d, r%d, r%d", cpu->destiny, cpu->operator01, cpu->operator02);
 			break;
 		case 2: // mul
 			registers[cpu->destiny] = registers[cpu->operator01] * registers[cpu->operator02];
+			dprintln("mul r%d, r%d, r%d", cpu->destiny, cpu->operator01, cpu->operator02);
 			break;
 		case 3: // div
 			registers[cpu->destiny] = registers[cpu->operator01] / registers[cpu->operator02];
+			dprintln("div r%d, r%d, r%d", cpu->destiny, cpu->operator01, cpu->operator02);
 			break;
 		case 4: // cmp_eq
 			registers[cpu->destiny] = registers[cpu->operator01] == registers[cpu->operator02];
+			dprintln("cmp_eq r%d, r%d, r%d", cpu->destiny, cpu->operator01, cpu->operator02);
 			break;
 		case 5: // cmp_nq
 			registers[cpu->destiny] = registers[cpu->operator01] != registers[cpu->operator02];
+			dprintln("cmp_nq r%d, r%d, r%d", cpu->destiny, cpu->operator01, cpu->operator02);
 			break;
-		case 6: // load
+		case 15: // load
 			registers[cpu->destiny] = memory[registers[cpu->operator01]];
+			dprintln("load r%d, (r%d)", cpu->destiny, cpu->operator01);
 			break;
-		case 7: // store
-			memory[registers[cpu->destiny]] = registers[cpu->operator01];
+		case 16: // store
+			memory[registers[cpu->operator01]] = registers[cpu->operator02];
+			dprintln("store (r%d), r%d", cpu->operator01, cpu->operator02);
 			break;
 		case 63: // exit
-			cpu->alive = false;
+			if (registers[cpu->operator01] == 0)
+			{
+				cpu->alive = false;
+				dprint("exit");
+			}
 			break;
+		default:
+			printf("Instrução não implementada\n");
+			exit(1);
 		}
 		break;
 	case 1: // Instruções I
+		dprintln("formato I", cpu->format);
 		switch (cpu->opcode)
 		{
 		case 0: // jump
-			cpu->addr = (cpu->operator01 - 1);
+			cpu->pc = cpu->operator01;
+			dprintln("jump %d\n", cpu->operator01);
 			break;
 		case 1: // jump_cond
-			switch (cpu->destiny)
+			switch (registers[cpu->destiny])
 			{
 			case 0:
+				dprint("jump_cond nao atendida");
 				break;
 			case 1:
-				cpu->addr = (cpu->operator01 - 1);
+				cpu->pc = cpu->operator01;
+				dprint("jump_cond r%d, %d\n", cpu->destiny, cpu->operator01);
 				break;
 			}
 			break;
 		case 2: // empty
+			cpu->alive = false;
+			printf("Instrução não implementada\n");
 			break;
 
 		case 3: // mov
 			registers[cpu->destiny] = cpu->operator01;
+			dprintln("mov r%d, %d", cpu->destiny, cpu->operator01);
 			break;
+		default:
+			printf("Instrução não implementada\n");
+			exit(1);
 		}
 		break;
+	default:
+		printf("Instrução não implementada\n");
+		exit(1);
 	}
 }
 
 int main(int argc, char **argv)
 {
-	memory[0] = 0b1000000000000010;	 // jump
-	memory[1] = 0b0111111000000000;	 // exit syscall
-	memory[2] = 0b1110010001100100;	 // mov r1, 100
-	memory[3] = 0b1111100000111001;	 // mov r6, 57
-	memory[4] = 0b0000000101110001;	 // add r5, r6, r1
-	memory[5] = 0b1111110000000000;	 // mov r7, 0
-	memory[6] = 0b0000111111101000;	 // store (r7), r5
-	memory[7] = 0b0000110100111000;	 // load r4, (r7)
-	memory[8] = 0b0000001100100110;	 // sub r4, r4, r6
-	memory[9] = 0b0000100011101001;	 // cmp_eq r3, r4, r1
-	memory[10] = 0b1010110000000001; // jump_cond r3, 1
+	if (argc != 2)
+	{
+		printf("usage: %s [bin_name]\n", argv[0]);
+		exit(1);
+	}
 
-	cpu.addr = 0;
+	load_binary_to_memory(argv[1], memory, MEMORY_SIZE * 2);
+
+	cpu.pc = 1;
 	cpu.alive = true;
 	while (cpu.alive)
 	{
 		search(&cpu);
 		decode(&cpu);
 		execute(&cpu);
-		cpu.addr++;
+		dprint("-------------------\n");
+		// getchar();
 	}
 	printf("%d\n", registers[4]);
+
+	printf("Fim da execucao\n");
+	print_registers();
+	printf("\n");
+	print_200_memory();
+	printf("\n");
 	return 0;
 }
