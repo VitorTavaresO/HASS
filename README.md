@@ -1,5 +1,7 @@
 # HASS - Hypothetical Architecture Simulator System
 
+2 Simulator were created, one is a monocycle simulator and the other is a pipeline simulator
+
 This is a Simulator for a Hypothetical Architecture with the following instruction set:
 
 Format R
