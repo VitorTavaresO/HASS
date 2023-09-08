@@ -21,7 +21,6 @@
 uint16_t memory[MEMORY_SIZE];
 uint16_t registers[REGISTERS];
 
-// Struct com as inforamções
 struct Cpu
 {
 	uint16_t pc;
@@ -50,7 +49,6 @@ void print_200_memory()
 	}
 }
 
-// Busca as instruções na memória
 void search(struct Cpu *cpu)
 {
 	cpu->instruction = memory[cpu->pc];
@@ -58,19 +56,18 @@ void search(struct Cpu *cpu)
 	cpu->pc++;
 }
 
-// Decodifica as instruções
 void decode(struct Cpu *cpu)
 {
 	cpu->format = extract_bits(cpu->instruction, 15, 1);
 	switch (cpu->format)
 	{
-	case 0: // Padrão de instruções R
+	case 0:
 		cpu->opcode = extract_bits(cpu->instruction, 9, 6);
 		cpu->destiny = extract_bits(cpu->instruction, 6, 3);
 		cpu->operator01 = extract_bits(cpu->instruction, 3, 3);
 		cpu->operator02 = extract_bits(cpu->instruction, 0, 3);
 		break;
-	case 1: // Padrão de instruções I
+	case 1:
 		cpu->opcode = extract_bits(cpu->instruction, 13, 2);
 		cpu->destiny = extract_bits(cpu->instruction, 10, 3);
 		cpu->operator01 = extract_bits(cpu->instruction, 0, 10);
@@ -83,43 +80,43 @@ void execute(struct Cpu *cpu)
 {
 	switch (cpu->format)
 	{
-	case 0: // Instruções R
+	case 0:
 		dprintln("formato R", cpu->format);
 		switch (cpu->opcode)
 		{
-		case 0: // add
+		case 0:
 			registers[cpu->destiny] = registers[cpu->operator01] + registers[cpu->operator02];
 			dprint("add r%d, r%d, r%d\n", cpu->destiny, cpu->operator01, cpu->operator02);
 			break;
-		case 1: // sub
+		case 1:
 			registers[cpu->destiny] = registers[cpu->operator01] - registers[cpu->operator02];
 			dprintln("sub r%d, r%d, r%d", cpu->destiny, cpu->operator01, cpu->operator02);
 			break;
-		case 2: // mul
+		case 2:
 			registers[cpu->destiny] = registers[cpu->operator01] * registers[cpu->operator02];
 			dprintln("mul r%d, r%d, r%d", cpu->destiny, cpu->operator01, cpu->operator02);
 			break;
-		case 3: // div
+		case 3:
 			registers[cpu->destiny] = registers[cpu->operator01] / registers[cpu->operator02];
 			dprintln("div r%d, r%d, r%d", cpu->destiny, cpu->operator01, cpu->operator02);
 			break;
-		case 4: // cmp_eq
+		case 4:
 			registers[cpu->destiny] = registers[cpu->operator01] == registers[cpu->operator02];
 			dprintln("cmp_eq r%d, r%d, r%d", cpu->destiny, cpu->operator01, cpu->operator02);
 			break;
-		case 5: // cmp_nq
+		case 5:
 			registers[cpu->destiny] = registers[cpu->operator01] != registers[cpu->operator02];
 			dprintln("cmp_nq r%d, r%d, r%d", cpu->destiny, cpu->operator01, cpu->operator02);
 			break;
-		case 15: // load
+		case 15:
 			registers[cpu->destiny] = memory[registers[cpu->operator01]];
 			dprintln("load r%d, (r%d)", cpu->destiny, cpu->operator01);
 			break;
-		case 16: // store
+		case 16:
 			memory[registers[cpu->operator01]] = registers[cpu->operator02];
 			dprintln("store (r%d), r%d", cpu->operator01, cpu->operator02);
 			break;
-		case 63: // exit
+		case 63:
 			if (registers[cpu->operator01] == 0)
 			{
 				cpu->alive = false;
@@ -131,15 +128,15 @@ void execute(struct Cpu *cpu)
 			exit(1);
 		}
 		break;
-	case 1: // Instruções I
+	case 1:
 		dprintln("formato I", cpu->format);
 		switch (cpu->opcode)
 		{
-		case 0: // jump
+		case 0:
 			cpu->pc = cpu->operator01;
 			dprintln("jump %d\n", cpu->operator01);
 			break;
-		case 1: // jump_cond
+		case 1:
 			switch (registers[cpu->destiny])
 			{
 			case 0:
@@ -151,12 +148,12 @@ void execute(struct Cpu *cpu)
 				break;
 			}
 			break;
-		case 2: // empty
+		case 2:
 			cpu->alive = false;
 			printf("Instrução não implementada\n");
 			break;
 
-		case 3: // mov
+		case 3:
 			registers[cpu->destiny] = cpu->operator01;
 			dprintln("mov r%d, %d", cpu->destiny, cpu->operator01);
 			break;
