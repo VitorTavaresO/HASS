@@ -21,17 +21,31 @@
 uint16_t memory[MEMORY_SIZE];
 uint16_t registers[REGISTERS];
 
-struct Cpu
+struct searchStage
 {
 	uint16_t pc;
+	uint16_t instruction;
+} searchStage;
+
+struct decodeStage
+{
 	uint16_t instruction;
 	uint16_t format;
 	uint16_t opcode;
 	uint16_t destiny;
 	uint16_t operator01;
 	uint16_t operator02;
+} decodeStage;
+
+struct executeStage
+{
+	uint16_t format;
+	uint16_t opcode;
+	uint16_t destiny;
+	uint16_t operator01;
+	uint16_t operator02;
 	bool alive;
-} cpu;
+} executeStage;
 
 void print_registers()
 {
@@ -49,122 +63,128 @@ void print_200_memory()
 	}
 }
 
-void search(struct Cpu *cpu)
+void search(struct searchStage *searchStage)
 {
-	cpu->instruction = memory[cpu->pc];
-	dprintln("pc: %d", cpu->pc);
-	cpu->pc++;
+	searchStage->instruction = memory[searchStage->pc];
+	dprintln("pc: %d", searchStage->pc);
+	searchStage->pc++;
 }
 
-void decode(struct Cpu *cpu)
+void decode(struct searchStage *searchStage, struct decodeStage *decodeStage)
 {
-	cpu->format = extract_bits(cpu->instruction, 15, 1);
-	switch (cpu->format)
+	decodeStage->instruction = searchStage->instruction;
+	decodeStage->format = extract_bits(decodeStage->instruction, 15, 1);
+	switch (decodeStage->format)
 	{
 	case 0:
-		cpu->opcode = extract_bits(cpu->instruction, 9, 6);
-		cpu->destiny = extract_bits(cpu->instruction, 6, 3);
-		cpu->operator01 = extract_bits(cpu->instruction, 3, 3);
-		cpu->operator02 = extract_bits(cpu->instruction, 0, 3);
+		decodeStage->opcode = extract_bits(decodeStage->instruction, 9, 6);
+		decodeStage->destiny = extract_bits(decodeStage->instruction, 6, 3);
+		decodeStage->operator01 = extract_bits(decodeStage->instruction, 3, 3);
+		decodeStage->operator02 = extract_bits(decodeStage->instruction, 0, 3);
 		break;
 	case 1:
-		cpu->opcode = extract_bits(cpu->instruction, 13, 2);
-		cpu->destiny = extract_bits(cpu->instruction, 10, 3);
-		cpu->operator01 = extract_bits(cpu->instruction, 0, 10);
-		cpu->operator02 = 0;
+		decodeStage->opcode = extract_bits(decodeStage->instruction, 13, 2);
+		decodeStage->destiny = extract_bits(decodeStage->instruction, 10, 3);
+		decodeStage->operator01 = extract_bits(decodeStage->instruction, 0, 10);
+		decodeStage->operator02 = 0;
 		break;
 	}
 }
 
-void execute(struct Cpu *cpu)
+void execute(struct searchStage *searchStage, struct decodeStage *decodeStage, struct executeStage *executeStage)
 {
-	switch (cpu->format)
+	executeStage->format = decodeStage->format;
+	executeStage->opcode = decodeStage->opcode;
+	executeStage->destiny = decodeStage->destiny;
+	executeStage->operator01 = decodeStage->operator01;
+	executeStage->operator02 = decodeStage->operator02;
+	switch (executeStage->format)
 	{
 	case 0:
-		dprintln("formato R", cpu->format);
-		switch (cpu->opcode)
+		dprintln("formato R", executeStage->format);
+		switch (executeStage->opcode)
 		{
 		case 0:
-			registers[cpu->destiny] = registers[cpu->operator01] + registers[cpu->operator02];
-			dprint("add r%d, r%d, r%d\n", cpu->destiny, cpu->operator01, cpu->operator02);
+			registers[executeStage->destiny] = registers[executeStage->operator01] + registers[executeStage->operator02];
+			dprint("add r%d, r%d, r%d\n", executeStage->destiny, executeStage->operator01, executeStage->operator02);
 			break;
 		case 1:
-			registers[cpu->destiny] = registers[cpu->operator01] - registers[cpu->operator02];
-			dprintln("sub r%d, r%d, r%d", cpu->destiny, cpu->operator01, cpu->operator02);
+			registers[executeStage->destiny] = registers[executeStage->operator01] - registers[executeStage->operator02];
+			dprintln("sub r%d, r%d, r%d", executeStage->destiny, executeStage->operator01, executeStage->operator02);
 			break;
 		case 2:
-			registers[cpu->destiny] = registers[cpu->operator01] * registers[cpu->operator02];
-			dprintln("mul r%d, r%d, r%d", cpu->destiny, cpu->operator01, cpu->operator02);
+			registers[executeStage->destiny] = registers[executeStage->operator01] * registers[executeStage->operator02];
+			dprintln("mul r%d, r%d, r%d", executeStage->destiny, executeStage->operator01, executeStage->operator02);
 			break;
 		case 3:
-			registers[cpu->destiny] = registers[cpu->operator01] / registers[cpu->operator02];
-			dprintln("div r%d, r%d, r%d", cpu->destiny, cpu->operator01, cpu->operator02);
+			registers[executeStage->destiny] = registers[executeStage->operator01] / registers[executeStage->operator02];
+			dprintln("div r%d, r%d, r%d", executeStage->destiny, executeStage->operator01, executeStage->operator02);
 			break;
 		case 4:
-			registers[cpu->destiny] = registers[cpu->operator01] == registers[cpu->operator02];
-			dprintln("cmp_eq r%d, r%d, r%d", cpu->destiny, cpu->operator01, cpu->operator02);
+			registers[executeStage->destiny] = registers[executeStage->operator01] == registers[executeStage->operator02];
+			dprintln("cmp_eq r%d, r%d, r%d", executeStage->destiny, executeStage->operator01, executeStage->operator02);
 			break;
 		case 5:
-			registers[cpu->destiny] = registers[cpu->operator01] != registers[cpu->operator02];
-			dprintln("cmp_nq r%d, r%d, r%d", cpu->destiny, cpu->operator01, cpu->operator02);
+			registers[executeStage->destiny] = registers[executeStage->operator01] != registers[executeStage->operator02];
+			dprintln("cmp_nq r%d, r%d, r%d", executeStage->destiny, executeStage->operator01, executeStage->operator02);
 			break;
 		case 15:
-			registers[cpu->destiny] = memory[registers[cpu->operator01]];
-			dprintln("load r%d, (r%d)", cpu->destiny, cpu->operator01);
+			registers[executeStage->destiny] = memory[registers[executeStage->operator01]];
+			dprintln("load r%d, (r%d)", executeStage->destiny, executeStage->operator01);
 			break;
 		case 16:
-			memory[registers[cpu->operator01]] = registers[cpu->operator02];
-			dprintln("store (r%d), r%d", cpu->operator01, cpu->operator02);
+			memory[registers[executeStage->operator01]] = registers[executeStage->operator02];
+			dprintln("store (r%d), r%d", executeStage->operator01, executeStage->operator02);
 			break;
 		case 63:
-			if (registers[cpu->operator01] == 0)
+			if (registers[executeStage->operator01] == 0)
 			{
-				cpu->alive = false;
+				executeStage->alive = false;
 				dprint("exit");
 			}
 			break;
 		default:
 			printf("Instrução não implementada\n");
-			exit(1);
+			executeStage->alive = false;
 		}
 		break;
 	case 1:
-		dprintln("formato I", cpu->format);
-		switch (cpu->opcode)
+		dprintln("formato I", executeStage->format);
+		switch (executeStage->opcode)
 		{
 		case 0:
-			cpu->pc = cpu->operator01;
-			dprintln("jump %d\n", cpu->operator01);
+			searchStage->pc = executeStage->operator01;
+			dprintln("jump %d\n", executeStage->operator01);
 			break;
 		case 1:
-			switch (registers[cpu->destiny])
+			switch (registers[executeStage->destiny])
 			{
 			case 0:
 				dprint("jump_cond nao atendida");
 				break;
 			case 1:
-				cpu->pc = cpu->operator01;
-				dprint("jump_cond r%d, %d\n", cpu->destiny, cpu->operator01);
+				searchStage->pc = executeStage->operator01;
+				dprint("jump_cond r%d, %d\n", executeStage->destiny, executeStage->operator01);
 				break;
 			}
 			break;
 		case 2:
-			cpu->alive = false;
+			executeStage->alive = false;
 			printf("Instrução não implementada\n");
 			break;
 
 		case 3:
-			registers[cpu->destiny] = cpu->operator01;
-			dprintln("mov r%d, %d", cpu->destiny, cpu->operator01);
+			registers[executeStage->destiny] = executeStage->operator01;
+			dprintln("mov r%d, %d", executeStage->destiny, executeStage->operator01);
 			break;
 		default:
 			printf("Instrução não implementada\n");
-			exit(1);
+			executeStage->alive = false;
 		}
 		break;
 	default:
 		printf("Instrução não implementada\n");
-		exit(1);
+		executeStage->alive = false;
 	}
 }
 
@@ -178,15 +198,33 @@ int main(int argc, char **argv)
 
 	load_binary_to_memory(argv[1], memory, MEMORY_SIZE * 2);
 
-	cpu.pc = 1;
-	cpu.alive = true;
-	while (cpu.alive)
+	searchStage.pc = 1;
+	executeStage.alive = true;
+	int cycle = 1;
+	while (executeStage.alive)
 	{
-		search(&cpu);
-		decode(&cpu);
-		execute(&cpu);
-		dprint("-------------------\n");
+		dprint("Ciclo de procesador: %d\n", cycle);
+		switch (cycle)
+		{
+		case 1:
+			search(&searchStage);
+			dprint("Busca");
+			break;
+		case 2:
+			decode(&searchStage, &decodeStage);
+			search(&searchStage);
+			dprint("Busca e decodifica");
+			break;
+		default:
+			execute(&searchStage, &decodeStage, &executeStage);
+			decode(&searchStage, &decodeStage);
+			search(&searchStage);
+			dprint("Busca, decodifica e executa");
+			break;
+		}
+		dprint("\n-------------------\n");
 		getchar();
+		cycle++;
 	}
 	printf("Fim da execucao\n");
 	print_registers();
