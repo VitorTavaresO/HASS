@@ -125,7 +125,7 @@ void execute(struct Cpu *cpu)
 			break;
 		default:
 			printf("Instrução não implementada\n");
-			exit(1);
+			cpu->alive = false;
 		}
 		break;
 	case 1:
@@ -159,12 +159,12 @@ void execute(struct Cpu *cpu)
 			break;
 		default:
 			printf("Instrução não implementada\n");
-			exit(1);
+			cpu->alive = false;
 		}
 		break;
 	default:
 		printf("Instrução não implementada\n");
-		exit(1);
+		cpu->alive = false;
 	}
 }
 
