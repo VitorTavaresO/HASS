@@ -143,10 +143,21 @@ void store(struct executeStage *executeStage)
 	dprintln("store (r%d), r%d", executeStage->operator01, executeStage->operator02);
 }
 
-void kill(struct executeStage *executeStage)
+void syscall(struct executeStage *executeStage)
+{
+	if (registers[executeStage->operator01] == 0)
+	{
+		executeStage->alive = false;
+		printf("Fim da execucao\n");
+	}
+	executeStage->alive = false;
+	printf("Syscall nao implementada\n");
+}
+
+void not_implementedR(struct executeStage *executeStage)
 {
 	executeStage->alive = false;
-	dprint("kill\n");
+	printf("Instrucao de Fomato R nao implementada\n");
 }
 
 void jump(struct searchStage *searchStage, struct executeStage *executeStage)
@@ -175,6 +186,12 @@ void mov(struct searchStage *searchStage, struct executeStage *executeStage)
 	dprintln("mov r%d, %d", executeStage->destiny, executeStage->operator01);
 }
 
+void not_implementedI(struct searchStage *searchStage, struct executeStage *executeStage)
+{
+	executeStage->alive = false;
+	printf("Instrucao de Fomato I nao implementada\n");
+}
+
 void (*executeFunctionsR[])(struct executeStage *) = {
 	[0] = add,
 	[1] = sub,
@@ -182,64 +199,9 @@ void (*executeFunctionsR[])(struct executeStage *) = {
 	[3] = divi,
 	[4] = cmp_equal,
 	[5] = cmp_nequal,
-	[6] = kill,
-	[7] = kill,
-	[8] = kill,
-	[9] = kill,
-	[10] = kill,
-	[11] = kill,
-	[12] = kill,
-	[13] = kill,
-	[14] = kill,
 	[15] = load,
 	[16] = store,
-	[17] = kill,
-	[18] = kill,
-	[19] = kill,
-	[20] = kill,
-	[21] = kill,
-	[22] = kill,
-	[23] = kill,
-	[24] = kill,
-	[25] = kill,
-	[26] = kill,
-	[27] = kill,
-	[28] = kill,
-	[29] = kill,
-	[30] = kill,
-	[31] = kill,
-	[32] = kill,
-	[33] = kill,
-	[34] = kill,
-	[35] = kill,
-	[36] = kill,
-	[37] = kill,
-	[38] = kill,
-	[39] = kill,
-	[40] = kill,
-	[41] = kill,
-	[42] = kill,
-	[43] = kill,
-	[44] = kill,
-	[45] = kill,
-	[46] = kill,
-	[47] = kill,
-	[48] = kill,
-	[49] = kill,
-	[50] = kill,
-	[51] = kill,
-	[52] = kill,
-	[53] = kill,
-	[54] = kill,
-	[55] = kill,
-	[56] = kill,
-	[57] = kill,
-	[58] = kill,
-	[59] = kill,
-	[60] = kill,
-	[61] = kill,
-	[62] = kill,
-	[63] = kill,
+	[63] = syscall,
 };
 void (*executeFunctionsI[])(struct searchStage *, struct executeStage *) = {
 	[0] = jump,
@@ -250,13 +212,13 @@ void (*executeFunctionsI[])(struct searchStage *, struct executeStage *) = {
 void executeR(struct searchStage *searchStage, struct executeStage *executeStage)
 {
 	dprintln("formato R", executeStage->format);
-	executeFunctionsR[executeStage->opcode](executeStage);
+	(executeFunctionsR[executeStage->opcode] ? executeFunctionsR[executeStage->opcode] : not_implementedR)(executeStage);
 }
 
 void executeI(struct searchStage *searchStage, struct executeStage *executeStage)
 {
 	dprintln("formato I", executeStage->format);
-	executeFunctionsI[executeStage->opcode](searchStage, executeStage);
+	(executeFunctionsI[executeStage->opcode] ? executeFunctionsI[executeStage->opcode] : not_implementedI)(searchStage, executeStage);
 }
 
 void (*executeFormats[])(struct searchStage *, struct executeStage *) = {
