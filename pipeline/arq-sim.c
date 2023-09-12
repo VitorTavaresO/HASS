@@ -150,8 +150,11 @@ void syscall(struct executeStage *executeStage)
 		executeStage->alive = false;
 		printf("Fim da execucao\n");
 	}
-	executeStage->alive = false;
-	printf("Syscall nao implementada\n");
+	else
+	{
+		executeStage->alive = false;
+		printf("Syscall nao implementada\n");
+	}
 }
 
 void not_implementedR(struct executeStage *executeStage)
