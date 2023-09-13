@@ -15,11 +15,14 @@
 #define dprint(...)
 #define dprintln(f, ...)
 #endif
+
 #define MEMORY_SIZE 64 * 1024
 #define REGISTERS 8
 
 uint16_t memory[MEMORY_SIZE];
 uint16_t registers[REGISTERS];
+enum STAGES {SEARCH, DECODE, EXECUTE, END};
+enum STAGES stage = SEARCH;
 
 struct searchStage
 {
@@ -147,11 +150,13 @@ void syscall(struct executeStage *executeStage)
 {
 	if (registers[executeStage->operator01] == 0)
 	{
+		stage = END;
 		executeStage->alive = false;
 		printf("Fim da execucao\n");
 	}
 	else
 	{
+		stage = END;
 		executeStage->alive = false;
 		printf("Syscall nao implementada\n");
 	}
@@ -178,6 +183,7 @@ void jump_cond(struct searchStage *searchStage, struct executeStage *executeStag
 		break;
 	case 1:
 		searchStage->pc = executeStage->operator01;
+		stage = SEARCH;
 		dprint("jump_cond r%d, %d\n", executeStage->destiny, executeStage->operator01);
 		break;
 	}
@@ -254,18 +260,20 @@ int main(int argc, char **argv)
 	while (executeStage.alive)
 	{
 		dprint("Ciclo de procesador: %d\n", cycle);
-		switch (cycle)
+		switch (stage != END ? stage : END)
 		{
-		case 1:
+		case SEARCH:
 			search(&searchStage);
 			dprint("Busca");
+			stage = DECODE;
 			break;
-		case 2:
+		case DECODE:
 			decode(&searchStage, &decodeStage);
 			search(&searchStage);
 			dprint("Busca e decodifica");
+			stage = EXECUTE;
 			break;
-		default:
+		case EXECUTE:
 			execute(&searchStage, &decodeStage, &executeStage);
 			decode(&searchStage, &decodeStage);
 			search(&searchStage);
