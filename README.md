@@ -13,7 +13,7 @@ Format R
  - opcode 05 - cmp_neq
  - opcode 15 - load
  - opcode 16 - store
- - opcode 63 - syscall
+ - opcode 63 - syscall - Exit (Mov r0, 0)
 
  Format I:
  - opcode 00 - jump
