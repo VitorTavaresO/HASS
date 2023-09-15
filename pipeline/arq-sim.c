@@ -21,7 +21,13 @@
 
 uint16_t memory[MEMORY_SIZE];
 uint16_t registers[REGISTERS];
-enum STAGES {SEARCH, DECODE, EXECUTE, END};
+enum STAGES
+{
+	SEARCH,
+	DECODE,
+	EXECUTE,
+	END
+};
 enum STAGES stage = SEARCH;
 
 struct searchStage
@@ -151,20 +157,20 @@ void syscall(struct executeStage *executeStage)
 	if (registers[executeStage->operator01] == 0)
 	{
 		stage = END;
-		executeStage->alive = false;
+		executeStage->alive = 0;
 		printf("Fim da execucao\n");
 	}
 	else
 	{
 		stage = END;
-		executeStage->alive = false;
+		executeStage->alive = 0;
 		printf("Syscall nao implementada\n");
 	}
 }
 
 void not_implementedR(struct executeStage *executeStage)
 {
-	executeStage->alive = false;
+	executeStage->alive = 0;
 	printf("Instrucao de Fomato R nao implementada\n");
 }
 
@@ -197,7 +203,7 @@ void mov(struct searchStage *searchStage, struct executeStage *executeStage)
 
 void not_implementedI(struct searchStage *searchStage, struct executeStage *executeStage)
 {
-	executeStage->alive = false;
+	executeStage->alive = 0;
 	printf("Instrucao de Fomato I nao implementada\n");
 }
 
@@ -255,7 +261,7 @@ int main(int argc, char **argv)
 	load_binary_to_memory(argv[1], memory, MEMORY_SIZE * 2);
 
 	searchStage.pc = 1;
-	executeStage.alive = true;
+	executeStage.alive = 1;
 	int cycle = 1;
 	while (executeStage.alive)
 	{

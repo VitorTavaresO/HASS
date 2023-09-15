@@ -119,13 +119,13 @@ void execute(struct Cpu *cpu)
 		case 63:
 			if (registers[cpu->operator01] == 0)
 			{
-				cpu->alive = false;
+				cpu->alive = 0;
 				dprint("exit");
 			}
 			break;
 		default:
 			printf("Instrução não implementada\n");
-			cpu->alive = false;
+			cpu->alive = 0;
 		}
 		break;
 	case 1:
@@ -149,7 +149,7 @@ void execute(struct Cpu *cpu)
 			}
 			break;
 		case 2:
-			cpu->alive = false;
+			cpu->alive = 0;
 			printf("Instrução não implementada\n");
 			break;
 
@@ -159,12 +159,12 @@ void execute(struct Cpu *cpu)
 			break;
 		default:
 			printf("Instrução não implementada\n");
-			cpu->alive = false;
+			cpu->alive = 0;
 		}
 		break;
 	default:
 		printf("Instrução não implementada\n");
-		cpu->alive = false;
+		cpu->alive = 0;
 	}
 }
 
@@ -179,7 +179,7 @@ int main(int argc, char **argv)
 	load_binary_to_memory(argv[1], memory, MEMORY_SIZE * 2);
 
 	cpu.pc = 1;
-	cpu.alive = true;
+	cpu.alive = 1;
 	while (cpu.alive)
 	{
 		search(&cpu);
