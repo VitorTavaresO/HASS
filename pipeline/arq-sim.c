@@ -350,7 +350,6 @@ void execute(struct searchStage *searchStage, struct decodeStage *decodeStage)
 {
 	executeFormats[decodeStage->format](searchStage, decodeStage);
 }
-
 int main(int argc, char **argv)
 {
 	if (argc != 2)
