@@ -250,7 +250,7 @@ void jump_cond(struct searchStage *searchStage, struct decodeStage *decodeStage)
 	int branchTaken = registers[decodeStage->destiny] == 1;
 	updateBpt(decodeStage->instructionPc, branchTaken, 1, decodeStage->operator01);
 
-	if (decodeStage->instructionNextPc == decodeStage->operator01)
+	if ((branchTaken && decodeStage->instructionNextPc == decodeStage->operator01) || (!branchTaken && decodeStage->instructionNextPc == decodeStage->instructionPc + 1))
 	{
 		dprintln("Acertou desvio", 0);
 		switch (registers[decodeStage->destiny])
