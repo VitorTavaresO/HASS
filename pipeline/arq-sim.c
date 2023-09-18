@@ -18,14 +18,53 @@
 
 #define MEMORY_SIZE 64 * 1024
 #define REGISTERS 8
+#define BPT_SIZE 1024
 
 uint16_t memory[MEMORY_SIZE];
 uint16_t registers[REGISTERS];
+
+typedef struct 
+{
+	uint16_t pc;
+	int8_t branchTaken;
+	bool isTaken;
+}BPTEntry;
+BPTEntry bpt[BPT_SIZE];
+
+void initBpt()
+{
+	for (int i = 0; i < BPT_SIZE; i++)
+	{
+		bpt[i].pc = 0;
+		bpt[i].branchTaken = -1;
+		bpt[i].isTaken = 0;
+	}
+}
+
+BPTEntry* predictBranch(uint16_t pc)
+{
+	BPTEntry *entry = &bpt[pc % BPT_SIZE];
+	if(entry->pc == pc && entry->branchTaken != 1){
+		return entry;
+	}
+	else{
+		return NULL;
+	}
+}
+
+void updateBpt(uint16_t pc, uint8_t branchTaken, bool isTaken)
+{
+	BPTEntry *entry = &bpt[pc % BPT_SIZE];
+	entry->pc = pc;
+	entry->branchTaken = branchTaken;
+	entry->isTaken = isTaken;
+}
+
 enum STAGES
 {
 	SEARCH,
-	DECODE,
-	EXECUTE,
+	DECODE_SEARCH,
+	EXECUTE_DECODE_SEARCH,
 	END
 };
 enum STAGES stage = SEARCH;
@@ -75,8 +114,14 @@ void print_200_memory()
 void search(struct searchStage *searchStage)
 {
 	searchStage->instruction = memory[searchStage->pc];
+	if(predictBranch(searchStage->pc)){
+		searchStage->pc++;
+		updateBpt(searchStage->pc, 1, 1);
+	}
+	else{
+		updateBpt(searchStage->pc, 0, 1);
+	}
 	dprintln("pc: %d", searchStage->pc);
-	searchStage->pc++;
 }
 
 void decodeR(uint16_t instruction, struct decodeStage *decodeStage)
@@ -189,7 +234,6 @@ void jump_cond(struct searchStage *searchStage, struct executeStage *executeStag
 		break;
 	case 1:
 		searchStage->pc = executeStage->operator01;
-		stage = SEARCH;
 		dprint("jump_cond r%d, %d\n", executeStage->destiny, executeStage->operator01);
 		break;
 	}
@@ -258,6 +302,8 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
+	memory[1] = 0b0000000000000000;
+
 	load_binary_to_memory(argv[1], memory, MEMORY_SIZE * 2);
 
 	searchStage.pc = 1;
@@ -266,20 +312,20 @@ int main(int argc, char **argv)
 	while (executeStage.alive)
 	{
 		dprint("Ciclo de procesador: %d\n", cycle);
-		switch (stage != END ? stage : END)
+		switch (stage)
 		{
 		case SEARCH:
 			search(&searchStage);
 			dprint("Busca");
-			stage = DECODE;
+			stage = DECODE_SEARCH;
 			break;
-		case DECODE:
+		case DECODE_SEARCH:
 			decode(&searchStage, &decodeStage);
 			search(&searchStage);
 			dprint("Busca e decodifica");
-			stage = EXECUTE;
+			stage = EXECUTE_DECODE_SEARCH;
 			break;
-		case EXECUTE:
+		case EXECUTE_DECODE_SEARCH:
 			execute(&searchStage, &decodeStage, &executeStage);
 			decode(&searchStage, &decodeStage);
 			search(&searchStage);
@@ -287,6 +333,17 @@ int main(int argc, char **argv)
 			break;
 		}
 		dprint("\n-------------------\n");
+		/*
+		uint16_t pc = searchStage.pc;
+		uint8_t branchTaken = predictBranch(pc);
+		if(branchTaken){
+			searchStage.pc = pc;
+			stage = DECODE;
+		}else {
+			updateBpt(pc, 1);
+		}
+		*/
+
 		getchar();
 		cycle++;
 	}
