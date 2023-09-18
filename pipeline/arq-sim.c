@@ -16,19 +16,22 @@
 #define dprintln(f, ...)
 #endif
 
-#define MEMORY_SIZE 64 * 1024
+#define MEMORY_SIZE (64 * 1024)
 #define REGISTERS 8
-#define BPT_SIZE 1024
+#define BPT_SIZE_BITS 10
+#define BPT_SIZE (1 << BPT_SIZE_BITS)
+#define BPT_MASK (BPT_SIZE - 1)
 
 uint16_t memory[MEMORY_SIZE];
 uint16_t registers[REGISTERS];
 
-typedef struct 
+typedef struct
 {
 	uint16_t pc;
 	int8_t branchTaken;
-	bool isTaken;
-}BPTEntry;
+	bool occupied;
+	uint16_t target;
+} BPTEntry;
 BPTEntry bpt[BPT_SIZE];
 
 void initBpt()
@@ -37,27 +40,30 @@ void initBpt()
 	{
 		bpt[i].pc = 0;
 		bpt[i].branchTaken = -1;
-		bpt[i].isTaken = 0;
+		bpt[i].occupied = 0;
 	}
 }
 
-BPTEntry* predictBranch(uint16_t pc)
+BPTEntry *predictBranch(uint16_t pc)
 {
-	BPTEntry *entry = &bpt[pc % BPT_SIZE];
-	if(entry->pc == pc && entry->branchTaken != 1){
+	BPTEntry *entry = &bpt[pc & BPT_MASK];
+	if (entry->occupied == 1 && entry->pc == pc && entry->branchTaken == 1)
+	{
 		return entry;
 	}
-	else{
+	else
+	{
 		return NULL;
 	}
 }
 
-void updateBpt(uint16_t pc, uint8_t branchTaken, bool isTaken)
+void updateBpt(uint16_t pc, uint8_t branchTaken, bool occupied, uint16_t target)
 {
-	BPTEntry *entry = &bpt[pc % BPT_SIZE];
+	BPTEntry *entry = &bpt[pc & BPT_MASK];
 	entry->pc = pc;
 	entry->branchTaken = branchTaken;
-	entry->isTaken = isTaken;
+	entry->occupied = occupied;
+	entry->target = target;
 }
 
 enum STAGES
@@ -113,13 +119,15 @@ void print_200_memory()
 
 void search(struct searchStage *searchStage)
 {
+	const BPTEntry *entry = predictBranch(searchStage->pc);
 	searchStage->instruction = memory[searchStage->pc];
-	if(predictBranch(searchStage->pc)){
-		searchStage->pc++;
-		updateBpt(searchStage->pc, 1, 1);
+	if (entry)
+	{
+		searchStage->pc = entry->target;
 	}
-	else{
-		updateBpt(searchStage->pc, 0, 1);
+	else
+	{
+		searchStage->pc++;
 	}
 	dprintln("pc: %d", searchStage->pc);
 }
@@ -301,8 +309,6 @@ int main(int argc, char **argv)
 		printf("usage: %s [bin_name]\n", argv[0]);
 		exit(1);
 	}
-
-	memory[1] = 0b0000000000000000;
 
 	load_binary_to_memory(argv[1], memory, MEMORY_SIZE * 2);
 
