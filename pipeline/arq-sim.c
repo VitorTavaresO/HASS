@@ -115,7 +115,6 @@ void updateBpt(uint16_t pc, uint8_t branchTaken, bool occupied, uint16_t target)
 	dprintln("Foi inserido no BPT: pc: %d, branchTaken: %d, occupied: %d, target: %d", entry->pc, entry->branchTaken, entry->occupied, entry->target);
 }
 
-
 void search(struct searchStage *searchStage)
 {
 	const BPTEntry *entry = predictBranch(searchStage->pc);
@@ -132,7 +131,6 @@ void search(struct searchStage *searchStage)
 	}
 	searchStage->instructionNextPc = searchStage->pc;
 	dprintln("End pc: %d", searchStage->pc);
-	dprintln("Target: %d", entry->target);
 	dprintln("Stage: %d", stage);
 }
 
@@ -166,7 +164,7 @@ void decode(struct searchStage *searchStage, struct decodeStage *decodeStage)
 void add(struct decodeStage *decodeStage)
 {
 	registers[decodeStage->destiny] = registers[decodeStage->operator01] + registers[decodeStage->operator02];
-	dprint("add r%d, r%d, r%d\n", decodeStage->destiny, decodeStage->operator01, decodeStage->operator02);
+	dprintln("add r%d, r%d, r%d", decodeStage->destiny, decodeStage->operator01, decodeStage->operator02);
 }
 
 void sub(struct decodeStage *decodeStage)
@@ -213,16 +211,18 @@ void store(struct decodeStage *decodeStage)
 
 void syscall(struct decodeStage *decodeStage)
 {
-	if (registers[decodeStage->operator01] == 0)
+	switch (registers[decodeStage->operator01])
 	{
-		stage = END;
-		decodeStage->alive = 0;
-		printf("Fim da execucao\n");
-	}
-	else
-	{
-		printf("Syscall nao implementada\n");
-	}
+		case 0:
+			stage = END;
+			decodeStage->alive = 0;
+			printf("Fim da execucao\n");
+			break;
+
+		default:
+			printf("Syscall nao implementada\n");
+			break;
+	}	
 }
 
 void not_implementedR(struct decodeStage *decodeStage)
@@ -244,7 +244,7 @@ void jump(struct searchStage *searchStage, struct decodeStage *decodeStage)
 		searchStage->pc = decodeStage->operator01;
 	}
 	updateBpt(decodeStage->instructionPc, 1, 1, decodeStage->operator01);
-	dprintln("Jump %d\n", decodeStage->operator01);
+	dprintln("jump %d\n", decodeStage->operator01);
 }
 
 void jump_cond(struct searchStage *searchStage, struct decodeStage *decodeStage)
@@ -258,10 +258,10 @@ void jump_cond(struct searchStage *searchStage, struct decodeStage *decodeStage)
 		switch (registers[decodeStage->destiny])
 		{
 		case 0:
-			dprint("Jump_cond nao atendida\n");
+			dprint("jump_cond nao atendida\n");
 			break;
 		case 1:
-			dprint("Jump_cond atendida\n");
+			dprint("jump_cond atendida\n");
 			break;
 		}
 	}
@@ -271,18 +271,17 @@ void jump_cond(struct searchStage *searchStage, struct decodeStage *decodeStage)
 		switch (registers[decodeStage->destiny])
 		{
 		case 0:
-			dprint("Jump_cond nao atendida\n");
+			dprint("jump_cond nao atendida\n");
 			stage = SEARCH;
 			searchStage->pc = decodeStage->instructionPc + 1;
 			break;
 		case 1:
-			dprint("Jump_cond atendida\n");
+			dprint("jump_cond atendida\n");
 			stage = SEARCH;
 			searchStage->pc = decodeStage->operator01;
 			break;
 		}
 	}
-	dprintln("Jump_cond r%d, %d\n", decodeStage->destiny, decodeStage->operator01);
 }
 
 void mov(struct searchStage *searchStage, struct decodeStage *decodeStage)
@@ -353,6 +352,7 @@ void execute(struct searchStage *searchStage, struct decodeStage *decodeStage)
 {
 	executeFormats[decodeStage->format](searchStage, decodeStage);
 }
+
 int main(int argc, char **argv)
 {
 	if (argc != 2)
