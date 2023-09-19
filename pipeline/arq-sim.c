@@ -36,39 +36,6 @@ typedef struct
 } BPTEntry;
 BPTEntry bpt[BPT_SIZE];
 
-void initBpt()
-{
-	for (int i = 0; i < BPT_SIZE; i++)
-	{
-		bpt[i].pc = 0;
-		bpt[i].branchTaken = -1;
-		bpt[i].occupied = 0;
-	}
-}
-
-BPTEntry *predictBranch(uint16_t pc)
-{
-	BPTEntry *entry = &bpt[pc & BPT_MASK];
-	if (entry->occupied == 1 && entry->pc == pc && entry->branchTaken == 1)
-	{
-		return entry;
-	}
-	else
-	{
-		return NULL;
-	}
-}
-
-void updateBpt(uint16_t pc, uint8_t branchTaken, bool occupied, uint16_t target)
-{
-	BPTEntry *entry = &bpt[pc & BPT_MASK];
-	entry->pc = pc;
-	entry->branchTaken = branchTaken;
-	entry->occupied = occupied;
-	entry->target = target;
-	dprintln("Foi inserido no BPT: pc: %d, branchTaken: %d, occupied: %d, target: %d", entry->pc, entry->branchTaken, entry->occupied, entry->target);
-}
-
 enum STAGES
 {
 	SEARCH,
@@ -115,6 +82,40 @@ void print_200_memory()
 	}
 }
 
+void initBpt()
+{
+	for (int i = 0; i < BPT_SIZE; i++)
+	{
+		bpt[i].pc = 0;
+		bpt[i].branchTaken = -1;
+		bpt[i].occupied = 0;
+	}
+}
+
+BPTEntry *predictBranch(uint16_t pc)
+{
+	BPTEntry *entry = &bpt[pc & BPT_MASK];
+	if (entry->occupied == 1 && entry->pc == pc && entry->branchTaken == 1)
+	{
+		return entry;
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+void updateBpt(uint16_t pc, uint8_t branchTaken, bool occupied, uint16_t target)
+{
+	BPTEntry *entry = &bpt[pc & BPT_MASK];
+	entry->pc = pc;
+	entry->branchTaken = branchTaken;
+	entry->occupied = occupied;
+	entry->target = target;
+	dprintln("Foi inserido no BPT: pc: %d, branchTaken: %d, occupied: %d, target: %d", entry->pc, entry->branchTaken, entry->occupied, entry->target);
+}
+
+
 void search(struct searchStage *searchStage)
 {
 	const BPTEntry *entry = predictBranch(searchStage->pc);
@@ -131,6 +132,7 @@ void search(struct searchStage *searchStage)
 	}
 	searchStage->instructionNextPc = searchStage->pc;
 	dprintln("End pc: %d", searchStage->pc);
+	dprintln("Target: %d", entry->target);
 	dprintln("Stage: %d", stage);
 }
 
@@ -233,16 +235,16 @@ void jump(struct searchStage *searchStage, struct decodeStage *decodeStage)
 {
 	if (decodeStage->instructionNextPc == decodeStage->operator01)
 	{
-		dprintln("Acertou desvio", 0);
+		dprint("Acertou desvio\n");
 	}
 	else
 	{
-		dprintln("Errou desvio", 0);
+		dprint("Errou desvio\n");
 		stage = SEARCH;
 		searchStage->pc = decodeStage->operator01;
 	}
 	updateBpt(decodeStage->instructionPc, 1, 1, decodeStage->operator01);
-	dprintln("jump %d\n", decodeStage->operator01);
+	dprintln("Jump %d\n", decodeStage->operator01);
 }
 
 void jump_cond(struct searchStage *searchStage, struct decodeStage *decodeStage)
@@ -252,34 +254,35 @@ void jump_cond(struct searchStage *searchStage, struct decodeStage *decodeStage)
 
 	if ((branchTaken && decodeStage->instructionNextPc == decodeStage->operator01) || (!branchTaken && decodeStage->instructionNextPc == decodeStage->instructionPc + 1))
 	{
-		dprintln("Acertou desvio", 0);
+		dprint("Acertou desvio\n");
 		switch (registers[decodeStage->destiny])
 		{
 		case 0:
-			dprintln("jump_cond nao atendida", 0);
+			dprint("Jump_cond nao atendida\n");
 			break;
 		case 1:
-			dprintln("jump_cond atendida", 1);
+			dprint("Jump_cond atendida\n");
 			break;
 		}
 	}
 	else
 	{
-		dprintln("Errou desvio", 0);
+		dprint("Errou desvio\n");
 		switch (registers[decodeStage->destiny])
 		{
 		case 0:
-			dprintln("jump_cond nao atendida", 0);
+			dprint("Jump_cond nao atendida\n");
 			stage = SEARCH;
 			searchStage->pc = decodeStage->instructionPc + 1;
 			break;
 		case 1:
-			dprintln("jump_cond atendida", 1);
+			dprint("Jump_cond atendida\n");
 			stage = SEARCH;
 			searchStage->pc = decodeStage->operator01;
 			break;
 		}
 	}
+	dprintln("Jump_cond r%d, %d\n", decodeStage->destiny, decodeStage->operator01);
 }
 
 void mov(struct searchStage *searchStage, struct decodeStage *decodeStage)
