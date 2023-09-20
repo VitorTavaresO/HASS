@@ -27,6 +27,9 @@
 uint16_t memory[MEMORY_SIZE];
 uint16_t registers[REGISTERS];
 
+int executeCounter = 0;
+int searchCounter = 0;
+
 typedef struct
 {
 	uint16_t pc;
@@ -132,6 +135,7 @@ void search(struct searchStage *searchStage)
 	searchStage->instructionNextPc = searchStage->pc;
 	dprintln("End pc: %d", searchStage->pc);
 	dprintln("Stage: %d", stage);
+	searchCounter++;
 }
 
 void function_decode_R(uint16_t instruction, struct decodeStage *decodeStage)
@@ -351,6 +355,7 @@ void (*executeFormats[])(struct searchStage *, struct decodeStage *) = {
 void execute(struct searchStage *searchStage, struct decodeStage *decodeStage)
 {
 	executeFormats[decodeStage->format](searchStage, decodeStage);
+	executeCounter++;
 }
 
 int main(int argc, char **argv)
@@ -405,6 +410,9 @@ int main(int argc, char **argv)
 		cycle++;
 	}
 	printf("Fim da execucao\n");
+	printf("Ciclos de processador: %d\n", cycle);
+	printf("Ciclos de busca: %d\n", searchCounter);
+	printf("Ciclos de execucao: %d\n", executeCounter);
 	print_registers();
 	printf("\n");
 	print_200_memory();
