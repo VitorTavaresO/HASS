@@ -27,6 +27,9 @@
 uint16_t memory[MEMORY_SIZE];
 uint16_t registers[REGISTERS];
 
+int executeCounter = 0;
+int searchCounter = 0;
+
 typedef struct
 {
 	uint16_t pc;
@@ -35,39 +38,6 @@ typedef struct
 	uint16_t target;
 } BPTEntry;
 BPTEntry bpt[BPT_SIZE];
-
-void initBpt()
-{
-	for (int i = 0; i < BPT_SIZE; i++)
-	{
-		bpt[i].pc = 0;
-		bpt[i].branchTaken = -1;
-		bpt[i].occupied = 0;
-	}
-}
-
-BPTEntry *predictBranch(uint16_t pc)
-{
-	BPTEntry *entry = &bpt[pc & BPT_MASK];
-	if (entry->occupied == 1 && entry->pc == pc && entry->branchTaken == 1)
-	{
-		return entry;
-	}
-	else
-	{
-		return NULL;
-	}
-}
-
-void updateBpt(uint16_t pc, uint8_t branchTaken, bool occupied, uint16_t target)
-{
-	BPTEntry *entry = &bpt[pc & BPT_MASK];
-	entry->pc = pc;
-	entry->branchTaken = branchTaken;
-	entry->occupied = occupied;
-	entry->target = target;
-	dprintln("Foi inserido no BPT: pc: %d, branchTaken: %d, occupied: %d, target: %d", entry->pc, entry->branchTaken, entry->occupied, entry->target);
-}
 
 enum STAGES
 {
@@ -115,6 +85,39 @@ void print_200_memory()
 	}
 }
 
+void initBpt()
+{
+	for (int i = 0; i < BPT_SIZE; i++)
+	{
+		bpt[i].pc = 0;
+		bpt[i].branchTaken = -1;
+		bpt[i].occupied = 0;
+	}
+}
+
+BPTEntry *predictBranch(uint16_t pc)
+{
+	BPTEntry *entry = &bpt[pc & BPT_MASK];
+	if (entry->occupied == 1 && entry->pc == pc && entry->branchTaken == 1)
+	{
+		return entry;
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+void updateBpt(uint16_t pc, uint8_t branchTaken, bool occupied, uint16_t target)
+{
+	BPTEntry *entry = &bpt[pc & BPT_MASK];
+	entry->pc = pc;
+	entry->branchTaken = branchTaken;
+	entry->occupied = occupied;
+	entry->target = target;
+	dprintln("Foi inserido no BPT: pc: %d, branchTaken: %d, occupied: %d, target: %d", entry->pc, entry->branchTaken, entry->occupied, entry->target);
+}
+
 void search(struct searchStage *searchStage)
 {
 	const BPTEntry *entry = predictBranch(searchStage->pc);
@@ -132,6 +135,7 @@ void search(struct searchStage *searchStage)
 	searchStage->instructionNextPc = searchStage->pc;
 	dprintln("End pc: %d", searchStage->pc);
 	dprintln("Stage: %d", stage);
+	searchCounter++;
 }
 
 void function_decode_R(uint16_t instruction, struct decodeStage *decodeStage)
@@ -164,7 +168,7 @@ void decode(struct searchStage *searchStage, struct decodeStage *decodeStage)
 void add(struct decodeStage *decodeStage)
 {
 	registers[decodeStage->destiny] = registers[decodeStage->operator01] + registers[decodeStage->operator02];
-	dprint("add r%d, r%d, r%d\n", decodeStage->destiny, decodeStage->operator01, decodeStage->operator02);
+	dprintln("add r%d, r%d, r%d", decodeStage->destiny, decodeStage->operator01, decodeStage->operator02);
 }
 
 void sub(struct decodeStage *decodeStage)
@@ -211,15 +215,17 @@ void store(struct decodeStage *decodeStage)
 
 void syscall(struct decodeStage *decodeStage)
 {
-	if (registers[decodeStage->operator01] == 0)
+	switch (registers[decodeStage->operator01])
 	{
+	case 0:
 		stage = END;
 		decodeStage->alive = 0;
 		printf("Fim da execucao\n");
-	}
-	else
-	{
+		break;
+
+	default:
 		printf("Syscall nao implementada\n");
+		break;
 	}
 }
 
@@ -233,11 +239,11 @@ void jump(struct searchStage *searchStage, struct decodeStage *decodeStage)
 {
 	if (decodeStage->instructionNextPc == decodeStage->operator01)
 	{
-		dprintln("Acertou desvio", 0);
+		dprint("Acertou desvio\n");
 	}
 	else
 	{
-		dprintln("Errou desvio", 0);
+		dprint("Errou desvio\n");
 		stage = SEARCH;
 		searchStage->pc = decodeStage->operator01;
 	}
@@ -252,29 +258,29 @@ void jump_cond(struct searchStage *searchStage, struct decodeStage *decodeStage)
 
 	if ((branchTaken && decodeStage->instructionNextPc == decodeStage->operator01) || (!branchTaken && decodeStage->instructionNextPc == decodeStage->instructionPc + 1))
 	{
-		dprintln("Acertou desvio", 0);
+		dprint("Acertou desvio\n");
 		switch (registers[decodeStage->destiny])
 		{
 		case 0:
-			dprintln("jump_cond nao atendida", 0);
+			dprint("jump_cond nao atendida\n");
 			break;
 		case 1:
-			dprintln("jump_cond atendida", 1);
+			dprint("jump_cond atendida\n");
 			break;
 		}
 	}
 	else
 	{
-		dprintln("Errou desvio", 0);
+		dprint("Errou desvio\n");
 		switch (registers[decodeStage->destiny])
 		{
 		case 0:
-			dprintln("jump_cond nao atendida", 0);
+			dprint("jump_cond nao atendida\n");
 			stage = SEARCH;
 			searchStage->pc = decodeStage->instructionPc + 1;
 			break;
 		case 1:
-			dprintln("jump_cond atendida", 1);
+			dprint("jump_cond atendida\n");
 			stage = SEARCH;
 			searchStage->pc = decodeStage->operator01;
 			break;
@@ -349,7 +355,9 @@ void (*executeFormats[])(struct searchStage *, struct decodeStage *) = {
 void execute(struct searchStage *searchStage, struct decodeStage *decodeStage)
 {
 	executeFormats[decodeStage->format](searchStage, decodeStage);
+	executeCounter++;
 }
+
 int main(int argc, char **argv)
 {
 	if (argc != 2)
@@ -400,6 +408,10 @@ int main(int argc, char **argv)
 		// getchar();
 		cycle++;
 	}
+	printf("Fim da execucao\n");
+	printf("Ciclos de processador: %d\n", cycle);
+	printf("Ciclos de busca: %d\n", searchCounter);
+	printf("Ciclos de execucao: %d\n", executeCounter);
 	print_registers();
 	printf("\n");
 	print_200_memory();

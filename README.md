@@ -18,5 +18,5 @@ Format R
  Format I:
  - opcode 00 - jump
  - opcode 01 - jump_cond
- - opcode 02 - empty
+ - opcode 02 - nop
  - opcode 03 - mov

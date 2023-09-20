@@ -21,6 +21,9 @@
 uint16_t memory[MEMORY_SIZE];
 uint16_t registers[REGISTERS];
 
+int executeCounter = 0;
+int searchCounter = 0;
+
 struct Cpu
 {
 	uint16_t pc;
@@ -54,6 +57,7 @@ void search(struct Cpu *cpu)
 	cpu->instruction = memory[cpu->pc];
 	dprintln("pc: %d", cpu->pc);
 	cpu->pc++;
+	searchCounter++;
 }
 
 void decode(struct Cpu *cpu)
@@ -166,6 +170,7 @@ void execute(struct Cpu *cpu)
 		printf("Instrução não implementada\n");
 		cpu->alive = 0;
 	}
+	executeCounter++;
 }
 
 int main(int argc, char **argv)
@@ -180,15 +185,20 @@ int main(int argc, char **argv)
 
 	cpu.pc = 1;
 	cpu.alive = 1;
+	int cycles = 0;
 	while (cpu.alive)
 	{
 		search(&cpu);
 		decode(&cpu);
 		execute(&cpu);
 		dprint("-------------------\n");
+		cycles++;
 		getchar();
 	}
 	printf("Fim da execucao\n");
+	printf("Ciclos do processador: %d\n", cycles);
+	printf("Ciclos de busca: %d\n", searchCounter);
+	printf("Ciclos de execucao: %d\n", executeCounter);
 	print_registers();
 	printf("\n");
 	print_200_memory();
