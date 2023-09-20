@@ -6,7 +6,7 @@
 #include "lib.h"
 #include "lib.c"
 
-#define DEBUG
+// #define DEBUG
 
 #ifdef DEBUG
 #define dprint(...) printf(__VA_ARGS__)
@@ -392,16 +392,14 @@ int main(int argc, char **argv)
 			{
 				dprintln("Flush", 0);
 			}
-			print_registers();
 
 			break;
 		}
 		dprint("\n-------------------\n");
 
-		getchar();
+		// getchar();
 		cycle++;
 	}
-	printf("Fim da execucao\n");
 	print_registers();
 	printf("\n");
 	print_200_memory();
