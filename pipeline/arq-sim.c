@@ -29,6 +29,8 @@ uint16_t registers[REGISTERS];
 
 int executeCounter = 0;
 int searchCounter = 0;
+float hitCounter = 0.0;
+float missCounter = 0.0;
 
 typedef struct
 {
@@ -240,10 +242,12 @@ void jump(struct searchStage *searchStage, struct decodeStage *decodeStage)
 	if (decodeStage->instructionNextPc == decodeStage->operator01)
 	{
 		dprint("Acertou desvio\n");
+		hitCounter++;
 	}
 	else
 	{
 		dprint("Errou desvio\n");
+		missCounter++;
 		stage = SEARCH;
 		searchStage->pc = decodeStage->operator01;
 	}
@@ -259,6 +263,7 @@ void jump_cond(struct searchStage *searchStage, struct decodeStage *decodeStage)
 	if ((branchTaken && decodeStage->instructionNextPc == decodeStage->operator01) || (!branchTaken && decodeStage->instructionNextPc == decodeStage->instructionPc + 1))
 	{
 		dprint("Acertou desvio\n");
+		hitCounter++;
 		switch (registers[decodeStage->destiny])
 		{
 		case 0:
@@ -272,6 +277,7 @@ void jump_cond(struct searchStage *searchStage, struct decodeStage *decodeStage)
 	else
 	{
 		dprint("Errou desvio\n");
+		missCounter++;
 		switch (registers[decodeStage->destiny])
 		{
 		case 0:
@@ -412,6 +418,10 @@ int main(int argc, char **argv)
 	printf("Ciclos de processador: %d\n", cycle);
 	printf("Ciclos de busca: %d\n", searchCounter);
 	printf("Ciclos de execucao: %d\n", executeCounter);
+	printf("Previsoes acertadas: %1.f\n", hitCounter);
+	printf("Previsoes erradas: %1.f\n", missCounter);
+	int hitPercentage = (hitCounter / (hitCounter + missCounter)) * 100.0;
+	printf("Taxa de acerto: %d%%\n", hitPercentage);
 	print_registers();
 	printf("\n");
 	print_200_memory();
