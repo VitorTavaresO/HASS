@@ -27,19 +27,19 @@
 uint16_t memory[MEMORY_SIZE];
 uint16_t registers[REGISTERS];
 
-int executeCounter = 0;
-int searchCounter = 0;
-float hitCounter = 0.0;
-float missCounter = 0.0;
+int execute_counter = 0;
+int search_counter = 0;
+float hit_counter = 0.0;
+float miss_counter = 0.0;
 
 typedef struct
 {
 	uint16_t pc;
-	int8_t branchTaken;
+	int8_t branch_taken;
 	bool occupied;
 	uint16_t target;
-} BPTEntry;
-BPTEntry bpt[BPT_SIZE];
+} bpt_entry;
+bpt_entry bpt[BPT_SIZE];
 
 enum STAGES
 {
@@ -50,15 +50,15 @@ enum STAGES
 };
 enum STAGES stage = SEARCH;
 
-struct searchStage
+struct search_stage
 {
 	uint16_t pc;
 	uint16_t instruction;
-	uint16_t instructionPc;
-	uint16_t instructionNextPc;
-} searchStage;
+	uint16_t instruction_pc;
+	uint16_t instruction_next_pc;
+} search_stage;
 
-struct decodeStage
+struct decode_stage
 {
 	uint16_t instruction;
 	uint16_t format;
@@ -66,10 +66,10 @@ struct decodeStage
 	uint16_t destiny;
 	uint16_t operator01;
 	uint16_t operator02;
-	uint16_t instructionPc;
-	uint16_t instructionNextPc;
+	uint16_t instruction_pc;
+	uint16_t instruction_next_pc;
 	bool alive;
-} decodeStage;
+} decode_stage;
 
 void print_registers()
 {
@@ -87,20 +87,20 @@ void print_200_memory()
 	}
 }
 
-void initBpt()
+void init_bpt()
 {
 	for (int i = 0; i < BPT_SIZE; i++)
 	{
 		bpt[i].pc = 0;
-		bpt[i].branchTaken = -1;
+		bpt[i].branch_taken = -1;
 		bpt[i].occupied = 0;
 	}
 }
 
-BPTEntry *predictBranch(uint16_t pc)
+bpt_entry *predict_branch(uint16_t pc)
 {
-	BPTEntry *entry = &bpt[pc & BPT_MASK];
-	if (entry->occupied == 1 && entry->pc == pc && entry->branchTaken == 1)
+	bpt_entry *entry = &bpt[pc & BPT_MASK];
+	if (entry->occupied == 1 && entry->pc == pc && entry->branch_taken == 1)
 	{
 		return entry;
 	}
@@ -110,118 +110,118 @@ BPTEntry *predictBranch(uint16_t pc)
 	}
 }
 
-void updateBpt(uint16_t pc, uint8_t branchTaken, bool occupied, uint16_t target)
+void update_bpt(uint16_t pc, uint8_t branch_taken, bool occupied, uint16_t target)
 {
-	BPTEntry *entry = &bpt[pc & BPT_MASK];
+	bpt_entry *entry = &bpt[pc & BPT_MASK];
 	entry->pc = pc;
-	entry->branchTaken = branchTaken;
+	entry->branch_taken = branch_taken;
 	entry->occupied = occupied;
 	entry->target = target;
-	dprintln("Foi inserido no BPT: pc: %d, branchTaken: %d, occupied: %d, target: %d", entry->pc, entry->branchTaken, entry->occupied, entry->target);
+	dprintln("Foi inserido no BPT: pc: %d, branch_taken: %d, occupied: %d, target: %d", entry->pc, entry->branch_taken, entry->occupied, entry->target);
 }
 
-void search(struct searchStage *searchStage)
+void search(struct search_stage *search_stage)
 {
-	const BPTEntry *entry = predictBranch(searchStage->pc);
-	searchStage->instruction = memory[searchStage->pc];
-	searchStage->instructionPc = searchStage->pc;
-	dprintln("Start pc: %d", searchStage->pc);
+	const bpt_entry *entry = predict_branch(search_stage->pc);
+	search_stage->instruction = memory[search_stage->pc];
+	search_stage->instruction_pc = search_stage->pc;
+	dprintln("Start pc: %d", search_stage->pc);
 	if (entry)
 	{
-		searchStage->pc = entry->target;
+		search_stage->pc = entry->target;
 	}
 	else
 	{
-		searchStage->pc++;
+		search_stage->pc++;
 	}
-	searchStage->instructionNextPc = searchStage->pc;
-	dprintln("End pc: %d", searchStage->pc);
+	search_stage->instruction_next_pc = search_stage->pc;
+	dprintln("End pc: %d", search_stage->pc);
 	dprintln("Stage: %d", stage);
-	searchCounter++;
+	search_counter++;
 }
 
-void function_decode_R(uint16_t instruction, struct decodeStage *decodeStage)
+void function_decode_r(uint16_t instruction, struct decode_stage *decode_stage)
 {
-	decodeStage->opcode = extract_bits(decodeStage->instruction, 9, 6);
-	decodeStage->destiny = extract_bits(decodeStage->instruction, 6, 3);
-	decodeStage->operator01 = extract_bits(decodeStage->instruction, 3, 3);
-	decodeStage->operator02 = extract_bits(decodeStage->instruction, 0, 3);
+	decode_stage->opcode = extract_bits(decode_stage->instruction, 9, 6);
+	decode_stage->destiny = extract_bits(decode_stage->instruction, 6, 3);
+	decode_stage->operator01 = extract_bits(decode_stage->instruction, 3, 3);
+	decode_stage->operator02 = extract_bits(decode_stage->instruction, 0, 3);
 }
 
-void function_decode_I(uint16_t instruction, struct decodeStage *decodeStage)
+void function_decode_i(uint16_t instruction, struct decode_stage *decode_stage)
 {
-	decodeStage->opcode = extract_bits(decodeStage->instruction, 13, 2);
-	decodeStage->destiny = extract_bits(decodeStage->instruction, 10, 3);
-	decodeStage->operator01 = extract_bits(decodeStage->instruction, 0, 10);
-	decodeStage->operator02 = 0;
+	decode_stage->opcode = extract_bits(decode_stage->instruction, 13, 2);
+	decode_stage->destiny = extract_bits(decode_stage->instruction, 10, 3);
+	decode_stage->operator01 = extract_bits(decode_stage->instruction, 0, 10);
+	decode_stage->operator02 = 0;
 }
 
-void decode(struct searchStage *searchStage, struct decodeStage *decodeStage)
+void decode(struct search_stage *search_stage, struct decode_stage *decode_stage)
 {
-	decodeStage->instructionPc = searchStage->instructionPc;
-	decodeStage->instructionNextPc = searchStage->instructionNextPc;
-	decodeStage->instruction = searchStage->instruction;
-	decodeStage->format = extract_bits(decodeStage->instruction, 15, 1);
-	void (*decodeFunctions[])(uint16_t, struct decodeStage *) = {
-		function_decode_R, function_decode_I};
-	decodeFunctions[decodeStage->format](decodeStage->instruction, *&decodeStage);
+	decode_stage->instruction_pc = search_stage->instruction_pc;
+	decode_stage->instruction_next_pc = search_stage->instruction_next_pc;
+	decode_stage->instruction = search_stage->instruction;
+	decode_stage->format = extract_bits(decode_stage->instruction, 15, 1);
+	void (*decodeFunctions[])(uint16_t, struct decode_stage *) = {
+		function_decode_r, function_decode_i};
+	decodeFunctions[decode_stage->format](decode_stage->instruction, *&decode_stage);
 }
 
-void add(struct decodeStage *decodeStage)
+void add(struct decode_stage *decode_stage)
 {
-	registers[decodeStage->destiny] = registers[decodeStage->operator01] + registers[decodeStage->operator02];
-	dprintln("add r%d, r%d, r%d", decodeStage->destiny, decodeStage->operator01, decodeStage->operator02);
+	registers[decode_stage->destiny] = registers[decode_stage->operator01] + registers[decode_stage->operator02];
+	dprintln("add r%d, r%d, r%d", decode_stage->destiny, decode_stage->operator01, decode_stage->operator02);
 }
 
-void sub(struct decodeStage *decodeStage)
+void sub(struct decode_stage *decode_stage)
 {
-	registers[decodeStage->destiny] = registers[decodeStage->operator01] - registers[decodeStage->operator02];
-	dprintln("sub r%d, r%d, r%d", decodeStage->destiny, decodeStage->operator01, decodeStage->operator02);
+	registers[decode_stage->destiny] = registers[decode_stage->operator01] - registers[decode_stage->operator02];
+	dprintln("sub r%d, r%d, r%d", decode_stage->destiny, decode_stage->operator01, decode_stage->operator02);
 }
 
-void mul(struct decodeStage *decodeStage)
+void mul(struct decode_stage *decode_stage)
 {
-	registers[decodeStage->destiny] = registers[decodeStage->operator01] * registers[decodeStage->operator02];
-	dprintln("mul r%d, r%d, r%d", decodeStage->destiny, decodeStage->operator01, decodeStage->operator02);
+	registers[decode_stage->destiny] = registers[decode_stage->operator01] * registers[decode_stage->operator02];
+	dprintln("mul r%d, r%d, r%d", decode_stage->destiny, decode_stage->operator01, decode_stage->operator02);
 }
 
-void divi(struct decodeStage *decodeStage)
+void divi(struct decode_stage *decode_stage)
 {
-	registers[decodeStage->destiny] = registers[decodeStage->operator01] / registers[decodeStage->operator02];
-	dprintln("div r%d, r%d, r%d", decodeStage->destiny, decodeStage->operator01, decodeStage->operator02);
+	registers[decode_stage->destiny] = registers[decode_stage->operator01] / registers[decode_stage->operator02];
+	dprintln("div r%d, r%d, r%d", decode_stage->destiny, decode_stage->operator01, decode_stage->operator02);
 }
 
-void cmp_equal(struct decodeStage *decodeStage)
+void cmp_equal(struct decode_stage *decode_stage)
 {
-	registers[decodeStage->destiny] = registers[decodeStage->operator01] == registers[decodeStage->operator02];
-	dprintln("cmp_eq r%d, r%d, r%d", decodeStage->destiny, decodeStage->operator01, decodeStage->operator02);
+	registers[decode_stage->destiny] = registers[decode_stage->operator01] == registers[decode_stage->operator02];
+	dprintln("cmp_eq r%d, r%d, r%d", decode_stage->destiny, decode_stage->operator01, decode_stage->operator02);
 }
 
-void cmp_nequal(struct decodeStage *decodeStage)
+void cmp_nequal(struct decode_stage *decode_stage)
 {
-	registers[decodeStage->destiny] = registers[decodeStage->operator01] != registers[decodeStage->operator02];
-	dprintln("cmp_nq r%d, r%d, r%d", decodeStage->destiny, decodeStage->operator01, decodeStage->operator02);
+	registers[decode_stage->destiny] = registers[decode_stage->operator01] != registers[decode_stage->operator02];
+	dprintln("cmp_nq r%d, r%d, r%d", decode_stage->destiny, decode_stage->operator01, decode_stage->operator02);
 }
 
-void load(struct decodeStage *decodeStage)
+void load(struct decode_stage *decode_stage)
 {
-	registers[decodeStage->destiny] = memory[registers[decodeStage->operator01]];
-	dprintln("load r%d, (r%d)", decodeStage->destiny, decodeStage->operator01);
+	registers[decode_stage->destiny] = memory[registers[decode_stage->operator01]];
+	dprintln("load r%d, (r%d)", decode_stage->destiny, decode_stage->operator01);
 }
 
-void store(struct decodeStage *decodeStage)
+void store(struct decode_stage *decode_stage)
 {
-	memory[registers[decodeStage->operator01]] = registers[decodeStage->operator02];
-	dprintln("store (r%d), r%d", decodeStage->operator01, decodeStage->operator02);
+	memory[registers[decode_stage->operator01]] = registers[decode_stage->operator02];
+	dprintln("store (r%d), r%d", decode_stage->operator01, decode_stage->operator02);
 }
 
-void syscall(struct decodeStage *decodeStage)
+void syscall(struct decode_stage *decode_stage)
 {
-	switch (registers[decodeStage->operator01])
+	switch (registers[decode_stage->operator01])
 	{
 	case 0:
 		stage = END;
-		decodeStage->alive = 0;
+		decode_stage->alive = 0;
 		printf("Fim da execucao\n");
 		break;
 
@@ -231,40 +231,40 @@ void syscall(struct decodeStage *decodeStage)
 	}
 }
 
-void not_implementedR(struct decodeStage *decodeStage)
+void not_implemented_r(struct decode_stage *decode_stage)
 {
-	decodeStage->alive = 0;
+	decode_stage->alive = 0;
 	printf("Instrucao de Fomato R nao implementada\n");
 }
 
-void jump(struct searchStage *searchStage, struct decodeStage *decodeStage)
+void jump(struct search_stage *search_stage, struct decode_stage *decode_stage)
 {
-	if (decodeStage->instructionNextPc == decodeStage->operator01)
+	if (decode_stage->instruction_next_pc == decode_stage->operator01)
 	{
 		dprint("Acertou desvio\n");
-		hitCounter++;
+		hit_counter++;
 	}
 	else
 	{
 		dprint("Errou desvio\n");
-		missCounter++;
+		miss_counter++;
 		stage = SEARCH;
-		searchStage->pc = decodeStage->operator01;
+		search_stage->pc = decode_stage->operator01;
 	}
-	updateBpt(decodeStage->instructionPc, 1, 1, decodeStage->operator01);
-	dprintln("jump %d\n", decodeStage->operator01);
+	update_bpt(decode_stage->instruction_pc, 1, 1, decode_stage->operator01);
+	dprintln("jump %d\n", decode_stage->operator01);
 }
 
-void jump_cond(struct searchStage *searchStage, struct decodeStage *decodeStage)
+void jump_cond(struct search_stage *search_stage, struct decode_stage *decode_stage)
 {
-	int branchTaken = registers[decodeStage->destiny] == 1;
-	updateBpt(decodeStage->instructionPc, branchTaken, 1, decodeStage->operator01);
+	int branch_taken = registers[decode_stage->destiny] == 1;
+	update_bpt(decode_stage->instruction_pc, branch_taken, 1, decode_stage->operator01);
 
-	if ((branchTaken && decodeStage->instructionNextPc == decodeStage->operator01) || (!branchTaken && decodeStage->instructionNextPc == decodeStage->instructionPc + 1))
+	if ((branch_taken && decode_stage->instruction_next_pc == decode_stage->operator01) || (!branch_taken && decode_stage->instruction_next_pc == decode_stage->instruction_pc + 1))
 	{
 		dprint("Acertou desvio\n");
-		hitCounter++;
-		switch (registers[decodeStage->destiny])
+		hit_counter++;
+		switch (registers[decode_stage->destiny])
 		{
 		case 0:
 			dprint("jump_cond nao atendida\n");
@@ -277,91 +277,91 @@ void jump_cond(struct searchStage *searchStage, struct decodeStage *decodeStage)
 	else
 	{
 		dprint("Errou desvio\n");
-		missCounter++;
-		switch (registers[decodeStage->destiny])
+		miss_counter++;
+		switch (registers[decode_stage->destiny])
 		{
 		case 0:
 			dprint("jump_cond nao atendida\n");
 			stage = SEARCH;
-			searchStage->pc = decodeStage->instructionPc + 1;
+			search_stage->pc = decode_stage->instruction_pc + 1;
 			break;
 		case 1:
 			dprint("jump_cond atendida\n");
 			stage = SEARCH;
-			searchStage->pc = decodeStage->operator01;
+			search_stage->pc = decode_stage->operator01;
 			break;
 		}
 	}
 }
 
-void mov(struct searchStage *searchStage, struct decodeStage *decodeStage)
+void mov(struct search_stage *search_stage, struct decode_stage *decode_stage)
 {
-	registers[decodeStage->destiny] = decodeStage->operator01;
-	dprintln("mov r%d, %d", decodeStage->destiny, decodeStage->operator01);
+	registers[decode_stage->destiny] = decode_stage->operator01;
+	dprintln("mov r%d, %d", decode_stage->destiny, decode_stage->operator01);
 }
 
-void not_implementedI(struct searchStage *searchStage, struct decodeStage *decodeStage)
+void not_implemented_i(struct search_stage *search_stage, struct decode_stage *decode_stage)
 {
-	decodeStage->alive = 0;
+	decode_stage->alive = 0;
 	printf("Instrucao de Fomato I nao implementada\n");
 }
 
-void (*executeFunctionsR[NUM_FUNCTIONS_R])(struct decodeStage *);
+void (*execute_functions_r[NUM_FUNCTIONS_R])(struct decode_stage *);
 
-void (*executeFunctionsI[NUM_FUNCTIONS_I])(struct searchStage *, struct decodeStage *);
+void (*execute_functions_i[NUM_FUNCTIONS_I])(struct search_stage *, struct decode_stage *);
 
-void fillTables()
+void fill_tables()
 {
 	int i;
 
 	for (i = 0; i < NUM_FUNCTIONS_R; i++)
 	{
-		executeFunctionsR[i] = not_implementedR;
+		execute_functions_r[i] = not_implemented_r;
 	}
 
-	executeFunctionsR[0] = add;
-	executeFunctionsR[1] = sub;
-	executeFunctionsR[2] = mul;
-	executeFunctionsR[3] = divi;
-	executeFunctionsR[4] = cmp_equal;
-	executeFunctionsR[5] = cmp_nequal;
-	executeFunctionsR[15] = load;
-	executeFunctionsR[16] = store;
-	executeFunctionsR[63] = syscall;
+	execute_functions_r[0] = add;
+	execute_functions_r[1] = sub;
+	execute_functions_r[2] = mul;
+	execute_functions_r[3] = divi;
+	execute_functions_r[4] = cmp_equal;
+	execute_functions_r[5] = cmp_nequal;
+	execute_functions_r[15] = load;
+	execute_functions_r[16] = store;
+	execute_functions_r[63] = syscall;
 
 	for (i = 0; i < NUM_FUNCTIONS_I; i++)
 	{
-		executeFunctionsI[i] = not_implementedI;
+		execute_functions_i[i] = not_implemented_i;
 	}
 
-	executeFunctionsI[0] = jump;
-	executeFunctionsI[1] = jump_cond;
-	executeFunctionsI[3] = mov;
+	execute_functions_i[0] = jump;
+	execute_functions_i[1] = jump_cond;
+	execute_functions_i[3] = mov;
 }
 
-void executeR(struct searchStage *searchStage, struct decodeStage *decodeStage)
+void execute_r(struct search_stage *search_stage, struct decode_stage *decode_stage)
 {
-	dprintln("formato R", decodeStage->format);
-	dprintln("%d", decodeStage->opcode);
-	(executeFunctionsR[decodeStage->opcode](decodeStage));
+	dprintln("formato R", decode_stage->format);
+	dprintln("%d", decode_stage->opcode);
+	(execute_functions_r[decode_stage->opcode](decode_stage));
 }
 
-void executeI(struct searchStage *searchStage, struct decodeStage *decodeStage)
+void execute_i(struct search_stage *search_stage, struct decode_stage *decode_stage)
 {
-	dprintln("formato I", decodeStage->format);
-	dprintln("%d", decodeStage->opcode);
-	(executeFunctionsI[decodeStage->opcode](searchStage, decodeStage));
+	dprintln("formato I", decode_stage->format);
+	dprintln("%d", decode_stage->opcode);
+	(execute_functions_i[decode_stage->opcode](search_stage, decode_stage));
 }
 
-void (*executeFormats[])(struct searchStage *, struct decodeStage *) = {
-	executeR,
-	executeI,
+void (*executeFormats[])(struct search_stage *, struct decode_stage *) = {
+	execute_r,
+	execute_i,
 };
 
-void execute(struct searchStage *searchStage, struct decodeStage *decodeStage)
+void execute(struct search_stage *search_stage, struct decode_stage *decode_stage)
 {
-	executeFormats[decodeStage->format](searchStage, decodeStage);
-	executeCounter++;
+	executeFormats[decode_stage->format](search_stage, decode_stage);
+	execute_counter++;
 }
 
 int main(int argc, char **argv)
@@ -373,33 +373,33 @@ int main(int argc, char **argv)
 	}
 
 	load_binary_to_memory(argv[1], memory, MEMORY_SIZE * 2);
-	fillTables();
-	initBpt();
-	searchStage.pc = 1;
-	decodeStage.alive = 1;
+	fill_tables();
+	init_bpt();
+	search_stage.pc = 1;
+	decode_stage.alive = 1;
 	int cycle = 1;
-	while (decodeStage.alive)
+	while (decode_stage.alive)
 	{
 		dprint("Ciclo de procesador: %d\n", cycle);
 		switch (stage)
 		{
 		case SEARCH:
-			search(&searchStage);
+			search(&search_stage);
 			dprint("Busca");
 			stage = DECODE_SEARCH;
 			break;
 		case DECODE_SEARCH:
-			decode(&searchStage, &decodeStage);
-			search(&searchStage);
+			decode(&search_stage, &decode_stage);
+			search(&search_stage);
 			dprint("Busca e decodifica");
 			stage = EXECUTE_DECODE_SEARCH;
 			break;
 		case EXECUTE_DECODE_SEARCH:
-			execute(&searchStage, &decodeStage);
+			execute(&search_stage, &decode_stage);
 			if (stage != SEARCH)
 			{
-				decode(&searchStage, &decodeStage);
-				search(&searchStage);
+				decode(&search_stage, &decode_stage);
+				search(&search_stage);
 				dprint("Busca, decodifica e executa\n");
 			}
 			else
@@ -416,12 +416,12 @@ int main(int argc, char **argv)
 	}
 	printf("Fim da execucao\n");
 	printf("Ciclos de processador: %d\n", cycle);
-	printf("Ciclos de busca: %d\n", searchCounter);
-	printf("Ciclos de execucao: %d\n", executeCounter);
-	printf("Previsoes acertadas: %1.f\n", hitCounter);
-	printf("Previsoes erradas: %1.f\n", missCounter);
-	int hitPercentage = (hitCounter / (hitCounter + missCounter)) * 100.0;
-	printf("Taxa de acerto: %d%%\n", hitPercentage);
+	printf("Ciclos de busca: %d\n", search_counter);
+	printf("Ciclos de execucao: %d\n", execute_counter);
+	printf("Previsoes acertadas: %1.f\n", hit_counter);
+	printf("Previsoes erradas: %1.f\n", miss_counter);
+	int hit_percentage = (hit_counter / (hit_counter + miss_counter)) * 100.0;
+	printf("Taxa de acerto: %d%%\n", hit_percentage);
 	print_registers();
 	printf("\n");
 	print_200_memory();
