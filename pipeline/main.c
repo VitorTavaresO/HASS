@@ -414,7 +414,6 @@ int main(int argc, char **argv)
 		// getchar();
 		cycle++;
 	}
-	printf("Fim da execucao\n");
 	printf("Ciclos de processador: %d\n", cycle);
 	printf("Ciclos de busca: %d\n", search_counter);
 	printf("Ciclos de execucao: %d\n", execute_counter);
