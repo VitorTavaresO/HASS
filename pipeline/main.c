@@ -101,13 +101,9 @@ bpt_entry *predict_branch(uint16_t pc)
 {
 	bpt_entry *entry = &bpt[pc & BPT_MASK];
 	if (entry->occupied == 1 && entry->pc == pc && entry->branch_taken == 1)
-	{
 		return entry;
-	}
 	else
-	{
 		return NULL;
-	}
 }
 
 void update_bpt(uint16_t pc, uint8_t branch_taken, bool occupied, uint16_t target)
@@ -123,17 +119,16 @@ void update_bpt(uint16_t pc, uint8_t branch_taken, bool occupied, uint16_t targe
 void search(struct search_stage *search_stage)
 {
 	const bpt_entry *entry = predict_branch(search_stage->pc);
+
 	search_stage->instruction = memory[search_stage->pc];
 	search_stage->instruction_pc = search_stage->pc;
 	dprintln("Start pc: %d", search_stage->pc);
+
 	if (entry)
-	{
 		search_stage->pc = entry->target;
-	}
 	else
-	{
 		search_stage->pc++;
-	}
+
 	search_stage->instruction_next_pc = search_stage->pc;
 	dprintln("End pc: %d", search_stage->pc);
 	dprintln("Stage: %d", stage);
@@ -158,13 +153,14 @@ void function_decode_i(uint16_t instruction, struct decode_stage *decode_stage)
 
 void decode(struct search_stage *search_stage, struct decode_stage *decode_stage)
 {
+	static void (*decodeFunctions[])(uint16_t, struct decode_stage *) = {
+		function_decode_r, function_decode_i};
+
 	decode_stage->instruction_pc = search_stage->instruction_pc;
 	decode_stage->instruction_next_pc = search_stage->instruction_next_pc;
 	decode_stage->instruction = search_stage->instruction;
 	decode_stage->format = extract_bits(decode_stage->instruction, 15, 1);
-	void (*decodeFunctions[])(uint16_t, struct decode_stage *) = {
-		function_decode_r, function_decode_i};
-	decodeFunctions[decode_stage->format](decode_stage->instruction, *&decode_stage);
+	decodeFunctions[decode_stage->format](decode_stage->instruction, decode_stage);
 }
 
 void add(struct decode_stage *decode_stage)
@@ -260,7 +256,8 @@ void jump_cond(struct search_stage *search_stage, struct decode_stage *decode_st
 	int branch_taken = registers[decode_stage->destiny] == 1;
 	update_bpt(decode_stage->instruction_pc, branch_taken, 1, decode_stage->operator01);
 
-	if ((branch_taken && decode_stage->instruction_next_pc == decode_stage->operator01) || (!branch_taken && decode_stage->instruction_next_pc == decode_stage->instruction_pc + 1))
+	if ((branch_taken && decode_stage->instruction_next_pc == decode_stage->operator01)
+	|| (!branch_taken && decode_stage->instruction_next_pc == decode_stage->instruction_pc + 1))
 	{
 		dprint("Acertou desvio\n");
 		hit_counter++;
