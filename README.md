@@ -1,6 +1,8 @@
 # HASS - Hypothetical Architecture Simulator System
 
-2 Simulator were created, one is a monocycle simulator and the other is a pipeline simulator
+This project was developed as an evaluation activity for the subject of Computer Architecture, using the architecture created by the professor Eduardo Molina Cruz.
+
+In this activity 2 Simulator were created, one is a monocycle simulator and the other is a pipeline simulator
 
 This is a Simulator for a Hypothetical Architecture with the following instruction set:
 
